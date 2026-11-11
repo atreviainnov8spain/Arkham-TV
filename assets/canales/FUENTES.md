@@ -1,0 +1,41 @@
+# Logotipos de canales
+
+Las marcas identifican las emisiones de sus respectivos titulares.
+
+El [listado estatal del Ministerio](https://television.digital.gob.es/television-digital/tdt/canales-tdt) del 7 de noviembre de 2026 determina la cobertura del catálogo. Para incorporar una marca, añade su PNG a esta carpeta, sus nombres en `catalogo.js` y la fuente aquí. Para una variante de una marca existente, añade el nombre al registro de esa marca.
+
+- [`3catinfo.png`](https://statics.3cat.cat/ccma/img/logo-3catinfo.png)
+- [`a3series.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/atreseries-es.png)
+- [`antena3.png`](https://commons.wikimedia.org/wiki/File:Logo_Antena_3_2025_(Naranja).svg)
+- [`bemad.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/be-mad-tv-es.png)
+- [`boing.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/boing-es.png)
+- [`canal24h.png`](https://img.rtve.es/i/?w=400&i=01775555696456.jpg)
+- [`canal33.png`](https://statics.3cat.cat/ccma/img/logo-33.png)
+- [`clan.png`](https://img.rtve.es/i/?w=400&i=01775555819578.jpg)
+- [`cuatro.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/cuatro-es.png)
+- [`divinity.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/divinity-es.png)
+- [`dkiss.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/dkiss-es.png)
+- [`dmax.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/dmax-es.png)
+- [`energy.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/energy-es.png)
+- [`esport3.png`](https://statics.3cat.cat/ccma/img/logo-esport3.png)
+- [`fdf.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/fdf-es.png)
+- [`ib3.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/ib3-es.png)
+- [`la1.png`](https://img.rtve.es/i/?w=400&i=01775555599039.jpg)
+- [`la2.png`](https://img.rtve.es/i/?w=400&i=01775555644047.jpg)
+- [`la2cat.png`](https://img.rtve.es/i/?w=400&i=01775556018873.jpg)
+- [`laseptima.png`](https://laseptima.com/wp-content/uploads/2026/10/LOGOxcapas-copia-02-b1509b.svg)
+- [`lasexta.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/lasexta-es.png)
+- [`mega.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/mega-es.png)
+- [`neox.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/neox-es.png)
+- [`nova.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/nova-es.png)
+- [`real-madrid-tv.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/real-madrid-tv-es.png)
+- [`squirrel.png`](https://squirreltv.es/img/ico/logo-bom.svg)
+- [`squirrel2.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/squirrel-dos-es.png)
+- [`sx3.png`](https://statics.3cat.cat/ccma/img/logo-sx3.png)
+- [`telecinco.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/telecinco-es.png)
+- [`teledeporte.png`](https://img.rtve.es/i/?w=400&i=01775555746886.jpg)
+- [`ten.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/ten-es.png)
+- [`trece.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/trece-es.png)
+- [`tv3.png`](https://statics.3cat.cat/ccma/img/logo-tv3.png)
+- [`veo7.png`](https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/spain/veo7-es.png)
+- `sx3-33.png` reúne las dos marcas de 3Cat que comparten frecuencia.

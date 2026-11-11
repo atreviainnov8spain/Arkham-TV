@@ -1,0 +1,158 @@
+[
+  {"version":"1.8.22","title":"Grabación 4K más estable","changes":[
+    ["grabaciones","Las grabaciones toleran pausas breves del codificador sin interrumpir el directo ni detenerse al empezar."],
+    ["grabaciones","Si el equipo o el almacenamiento no siguen el ritmo de la emisión, la aplicación muestra un aviso distinto al de pérdida de señal."]
+  ]},
+  {"version":"1.8.21","title":"Volumen en el panel de audio","changes":[
+    ["reproduccion","En Ubuntu se comprueba que el vídeo avanza al abrir la aplicación y al cambiar de canal, con recuperación automática si se queda fijo."],
+    ["interfaz","El volumen y el silencio se ajustan desde un módulo compacto sobre el vúmetro que sigue la paleta y el modo de Apariencia."],
+    ["sintonia","Las listas de canales guardadas se pueden eliminar desde el sintonizador. Los canales sintonizados siguen disponibles."],
+    ["sintonia","El contador muestra cuántos canales de TV ha detectado la búsqueda mientras comprueba las frecuencias UHF."],
+    ["grabaciones","Abre el explorador de archivos desde Grabaciones o desde la reproducción de un archivo guardado."]
+  ]},
+  {"version":"1.8.20","title":"Controles de la emisión","changes":[
+    ["reproduccion","El botón Reproducir o Pausar se oculta tras tres segundos de inactividad y reaparece al interactuar con el vídeo."]
+  ]},
+  {"version":"1.8.19","title":"Arranque de canales y grabaciones","changes":[
+    ["reproduccion","Si la imagen se queda fija al cambiar de canal, el reproductor intenta recuperarla automáticamente."],
+    ["grabaciones","El reproductor comprueba que el vídeo avanza al abrir una grabación y reintenta el arranque si se atasca."]
+  ]},
+  {"version":"1.8.18","title":"El expediente de Innsmouth","changes":[
+    ["interfaz","Una ilustración del puerto de Innsmouth presenta a Óscar Peña y Pedro Miñano, el desarrollador y el beta tester y colaborador de Arkham TV."]
+  ]},
+  {"version":"1.8.17","title":"Reproducción y sincronización de grabaciones","changes":[
+    ["grabaciones","El botón Reproducir vuelve a intentar el arranque si el reproductor interrumpe la primera carga."],
+    ["grabaciones","Las nuevas grabaciones conservan la sincronización entre audio y vídeo en 480p, 720p, 1080p y 4K."]
+  ]},
+  {"version":"1.8.16","title":"Vuelta al directo y arranque de canales","changes":[
+    ["grabaciones","Al abrir Grabaciones, la emisión deja de sonar. Al volver a En directo, el reproductor se incorpora a la emisión actual."],
+    ["reproduccion","Cada canal empieza a reproducirse cuando el vídeo está listo. El sonido está activado en el primer arranque y se respeta la preferencia de silencio si se cambia."],
+    ["interfaz","El Changelog acredita a Pedro Miñano como beta tester y colaborador."]
+  ]},
+  {"version":"1.8.15","title":"Pistas de audio y calidad de grabación","changes":[
+    ["reproduccion","Cambia la pista de audio desde la barra del reproductor según los idiomas que emite cada canal."],
+    ["grabaciones","Elige la pista de audio estéreo y la resolución: 4K, 1080p, 720p o 480p. Las mismas opciones están disponibles para grabar en directo y desde la Guía TV."]
+  ]},
+  {"version":"1.8.14","title":"Audio en sincronía, fichas y hora local","changes":[
+    ["reproduccion","El vúmetro y el espectro siguen el audio que se reproduce, también en el minirreproductor."],
+    ["interfaz","La ficha de la emisión separa la sinopsis, los datos y los créditos que envía cada canal."],
+    ["interfaz","En directo muestra la hora local en formato de 24 horas, debajo del selector de idioma."]
+  ]},
+  {"version":"1.8.13","title":"Grabaciones en estéreo y selección de canales","changes":[
+    ["grabaciones","Las grabaciones se guardan en 1080p con cadencia constante y audio AAC estéreo. La pista principal tiene prioridad sobre la audiodescripción."],
+    ["compatibilidad","La edición de Ubuntu acelera el procesamiento de vídeo en ARM64 e Intel. El selector de carpetas permite explorar el equipo, crear una carpeta y elegir dónde grabar."],
+    ["interfaz","El selector de sincronización de audio usa el mismo diseño que el menú de idioma, marca el canal activo y avisa si aún no hay canales sintonizados."]
+  ]},
+  {"version":"1.8.12","title":"Un selector de idioma integrado","changes":[
+    ["interfaz","El menú de idioma sigue la apariencia de Arkham TV, marca el idioma activo y se puede abrir y cerrar con el teclado."]
+  ]},
+  {"version":"1.8.11","title":"Castellano e inglés y calidad de emisión más clara","changes":[
+    ["interfaz","Cambia entre castellano e inglés desde la barra superior. El reproductor, la guía, la configuración y el changelog siguen el idioma que elijas."],
+    ["sintonia","Las tarjetas usan SD, HD y UHD para la resolución recibida y muestran el tamaño medido. El distintivo explica cuándo difiere del formato anunciado en el nombre del canal."]
+  ]},
+  {"version":"1.8.10","title":"Texto más legible y primer arranque del Snap","changes":[
+    ["interfaz","Una tipografía incluida en la aplicación mantiene los textos centrados con sus iconos. Los títulos ganan espacio y las tarjetas del Snap recuperan los logotipos de los canales."],
+    ["compatibilidad","El Snap incluye los códecs y abre la ventana nativa de Ubuntu sin pedir que se instalen bibliotecas por separado."]
+  ]},
+  {"version":"1.8.9","title":"Primer arranque en Ubuntu","changes":[
+    ["interfaz","La edición de Ubuntu abre correctamente en equipos con GTK 3 y GTK 4 instalados. Las bibliotecas necesarias se instalan con el paquete."]
+  ]},
+  {"version":"1.8.8","title":"Acerca de Arkham TV","changes":[
+    ["interfaz","El panel Acerca de en macOS actualiza la firma del desarrollador y describe la sintonización, la reproducción, la grabación y la compatibilidad."]
+  ]},
+  {"version":"1.8.7","title":"Nuevas tarjetas y Changelog a mano","changes":[
+    ["interfaz","Las tarjetas ganan espacio para el logotipo, el nombre y la frecuencia. El pulpo de Arkham TV aparece como marca de agua y una leyenda distingue los canales SD, HD y UHD."],
+    ["interfaz","Un marcador sustituye a la estrella y las tarjetas se pueden arrastrar a Favoritos o reordenar dentro del área."],
+    ["sintonia","Se guarda la resolución de vídeo detectada y se corrigen nombres con caracteres dañados, como SX3/33 y La Séptima, también en listas guardadas."],
+    ["interfaz","Changelog tiene un acceso con icono al final del menú lateral. Su cabecera incorpora la firma del desarrollador y el título aparece sin marco al abrir la página."]
+  ]},
+  {"version":"1.8.6","title":"Grabaciones y minirreproductor","changes":[
+    ["grabaciones","Un contador HH:MM:SS bajo el vídeo muestra cuánto tiempo lleva grabando."],
+    ["grabaciones","Reproduce los archivos guardados en la ventana principal, con el distintivo Grabación, o elimínalos desde la biblioteca."],
+    ["reproduccion","Al minimizar la aplicación, la emisión pasa a una ventana flotante que muestra el canal, el programa y el espectro de audio."],
+    ["sintonia","Nueva ubicación queda a la izquierda de Rango UHF y del botón de búsqueda para reducir la altura del sintonizador."],
+    ["interfaz","El pie enlaza al Changelog, con el historial de Arkham TV desde la versión 1.0."]
+  ]},
+  {"version":"1.8.5","title":"Sintonizar en otro lugar","changes":[
+    ["sintonia","Nueva ubicación gana visibilidad y el botón Buscar desde cero aclara qué hará el siguiente barrido."]
+  ]},
+  {"version":"1.8.4","title":"Grabaciones y perfiles de antena","changes":[
+    ["grabaciones","Graba desde el reproductor o programa una grabación desde la Guía TV. Los MP4 se guardan a 1080p en una carpeta elegida por ti, con el título y la fecha."],
+    ["grabaciones","Una grabación programada permite ver otro canal de la misma frecuencia UHF. La grabación manual termina al cambiar de canal."],
+    ["sintonia","Guarda y carga listas con nombre para casa, hoteles o una antena móvil. El indicador distingue la señal de antena de la conexión USB."],
+    ["interfaz","El logotipo vectorial mantiene la transparencia y se adapta al modo claro u oscuro."]
+  ]},
+  {"version":"1.8.3","title":"Fichas de cine más fiables","changes":[
+    ["guia","La sinopsis separa el argumento de los datos técnicos incluso en descripciones compactas de canales como Cuatro o Be Mad."],
+    ["guia","Arkham TV verifica la clave de OMDb y consulta la película al desplegar la ficha. Si hay varias coincidencias, puedes elegir el título correcto."]
+  ]},
+  {"version":"1.8.2","title":"Estado de antena más visible","changes":[
+    ["interfaz","Un icono de antena identifica el estado del sintonizador y queda más separado del botón Apariencia."]
+  ]},
+  {"version":"1.8.1","title":"Sinopsis legibles y pegado en macOS","changes":[
+    ["guia","Las fichas separan la sinopsis del título original, la dirección, el reparto y otros datos recibidos por antena."],
+    ["compatibilidad","El menú Edición de macOS permite pegar la clave de OMDb desde otra aplicación con ⌘V."]
+  ]},
+  {"version":"1.8.0","title":"Qué estás viendo","changes":[
+    ["guia","Una ficha desplegable bajo el vídeo muestra el programa, su horario, el progreso y la sinopsis. Las películas se pueden consultar en IMDb y ampliar con OMDb."],
+    ["sintonia","El pie identifica automáticamente el modelo de sintonizador conectado."]
+  ]},
+  {"version":"1.7.2","title":"Volumen estable y marca actualizada","changes":[
+    ["audio","El deslizador mantiene su posición al arrastrarlo y el botón de silencio conserva su anchura al cambiar de estado."],
+    ["interfaz","Se actualizan el logotipo y el icono de la aplicación."]
+  ]},
+  {"version":"1.7.1","title":"Espectro de audio en directo","changes":[
+    ["audio","Un gráfico de barras segmentadas sigue la energía de diez bandas, de 31 Hz a 16 kHz."],
+    ["compatibilidad","El pie identifica la compatibilidad con AVerMedia A835 y A835B para DVB-T."]
+  ]},
+  {"version":"1.7.0","title":"Guía TV y estudio de audio","changes":[
+    ["guia","Una parrilla por canales muestra la programación recibida por antena y permite sintonizar desde la ficha de un programa."],
+    ["audio","Llegan el ecualizador de diez bandas, los perfiles Diálogos, Cine, Noche, Rock y otros, y el vúmetro estéreo digital o analógico. En directo se ve el perfil aplicado y su curva."],
+    ["reproduccion","En pantalla completa, el control de sonido se oculta a los cinco segundos y vuelve al mover el cursor."],
+    ["interfaz","Los favoritos pasan a una fila bajo la emisión, antes del catálogo."],
+    ["compatibilidad","macOS y Ubuntu comparten la numeración de las versiones."]
+  ]},
+  {"version":"1.6.4","title":"Sincronización en los dos sentidos","changes":[
+    ["audio","En macOS, el ajuste por canal permite corregir voces que se adelantan o se retrasan respecto a la imagen."],
+    ["interfaz","La ventana Acerca de Arkham TV presenta por separado la autoría y la compatibilidad de macOS."]
+  ]},
+  {"version":"1.6.3","title":"AVerMedia A835B en Ubuntu","changes":[
+    ["compatibilidad","Ubuntu reconoce el A835B con identificador USB 07ca:3835 junto al A835. La preparación instala el firmware necesario para la variante IT9135."]
+  ]},
+  {"version":"1.6.2","title":"Instalación gráfica en Ubuntu","changes":[
+    ["compatibilidad","Los paquetes .deb instalan el lanzador con el icono del pulpo, incluyen FFmpeg y FFprobe, y declaran WebKitGTK y los códecs como dependencias."]
+  ]},
+  {"version":"1.6.1","title":"Reproducción en Ubuntu y Parallels","changes":[
+    ["compatibilidad","Se comprueban los códecs H.264 de la ventana nativa y se ajusta la ruta de vídeo en Parallels para evitar imágenes negras."]
+  ]},
+  {"version":"1.6","title":"Ventana nativa para Ubuntu","changes":[
+    ["compatibilidad","Las ediciones Ubuntu Intel y ARM64 abren su propia ventana GTK con WebKitGTK."]
+  ]},
+  {"version":"1.5","title":"Primera edición para Ubuntu","changes":[
+    ["compatibilidad","Llegan los ejecutables portátiles Intel y ARM64, con interfaz en el navegador y soporte para el A835 y la familia Volar HD PRO."]
+  ]},
+  {"version":"1.4.1","title":"Una interfaz que se adapta a la ventana","changes":[
+    ["interfaz","El vídeo conserva su proporción al redimensionar. Los campos y botones de sincronización comparten altura."],
+    ["audio","El volumen horizontal usa el verde del control de pantalla completa y mejora su respuesta al arrastre."]
+  ]},
+  {"version":"1.4","title":"Sincronización por canal","changes":[
+    ["audio","Configuración permite retrasar el audio de un canal cuando la voz se adelanta y guardar el valor para la siguiente sesión."]
+  ]},
+  {"version":"1.3","title":"Logos de canales y controles bajo el vídeo","changes":[
+    ["interfaz","Se amplía el catálogo de logotipos de la TDT nacional con coincidencias por nombre y variantes HD. El título de macOS se centra y el pie muestra la versión."],
+    ["audio","El volumen horizontal se coloca junto a Silenciar, debajo del vídeo. En pantalla completa se mantiene vertical."]
+  ]},
+  {"version":"1.2","title":"Tus canales favoritos","changes":[
+    ["interfaz","Guarda favoritos arrastrando canales a su zona o pulsando la estrella. El pie incorpora la autoría."],
+    ["audio","El volumen a pantalla completa pasa a un control vertical en la esquina inferior derecha."]
+  ]},
+  {"version":"1.1","title":"Arkham TV llega al escritorio de Mac","changes":[
+    ["compatibilidad","La aplicación universal para Mac Intel y Apple Silicon incluye el firmware y las herramientas de reproducción. Busca o recupera los canales al abrirse."],
+    ["interfaz","El diseño incorpora el icono del pulpo, paletas claras y oscuras, accesos a Canales y Sintonizador, y logotipos en las tarjetas."],
+    ["audio","El reproductor permite silenciar y volver a activar el sonido."]
+  ]},
+  {"version":"1.0","title":"Primera emisión de Arkham TV","changes":[
+    ["sintonia","La aplicación web local sintoniza la TDT con el AVerMedia A835 en macOS y permite buscar frecuencias UHF y filtrar canales por nombre."],
+    ["reproduccion","El reproductor muestra la emisión de antena en directo y permite verla a pantalla completa."]
+  ]}
+]

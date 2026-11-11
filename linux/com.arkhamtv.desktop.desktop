@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Arkham TV
+Comment=Televisión digital terrestre
+Exec=/usr/bin/arkham-tv
+TryExec=/usr/bin/arkham-tv
+Icon=/usr/share/icons/hicolor/512x512/apps/com.arkhamtv.desktop.png
+Terminal=false
+Categories=AudioVideo;Video;TV;
+StartupNotify=true
+StartupWMClass=arkham-tv

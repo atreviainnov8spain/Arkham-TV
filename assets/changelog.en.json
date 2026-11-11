@@ -1,0 +1,166 @@
+{
+  "1.8.22": [
+    "More reliable 4K recording",
+    "Recordings can ride out brief encoder stalls without cutting out at startup or interrupting live playback.",
+    "If recording cannot keep up with the broadcast, Arkham TV shows a separate message from a signal loss."
+  ],
+  "1.8.21": [
+    "Volume in the audio panel",
+    "On Ubuntu, the player checks that video advances when opening the app or switching channels and recovers automatically if the picture freezes.",
+    "Volume and mute are grouped in a compact module above the level meter that follows the current palette and appearance mode.",
+    "Saved channel lists can be deleted from the tuner. Your tuned channels remain available.",
+    "A counter shows how many TV channels the scan has found while it checks UHF frequencies.",
+    "Open your file manager from the recordings library or from an individual recording."
+  ],
+  "1.8.20": [
+    "Live playback controls",
+    "The Play or Pause button hides after three seconds of inactivity and reappears when you interact with the video."
+  ],
+  "1.8.19": [
+    "Starting channels and recordings",
+    "If the picture freezes when switching channels, the player tries to recover automatically.",
+    "The player checks that video advances when opening a recording and retries if it stalls."
+  ],
+  "1.8.18": [
+    "The Innsmouth Case",
+    "An illustration of Innsmouth harbor introduces Óscar Peña and Pedro Miñano, Arkham TV’s developer and beta tester and contributor."
+  ],
+  "1.8.17": [
+    "Recording playback and synchronization",
+    "The Play button retries playback if the player interrupts the initial load.",
+    "New recordings preserve audio and video synchronization in 480p, 720p, 1080p and 4K."
+  ],
+  "1.8.16": [
+    "Back to live TV and automatic channel playback",
+    "Live audio stops when you open Recordings. Return to Live to join the current broadcast.",
+    "Each channel starts playing when the video is ready. Sound is on at first launch and your mute preference is remembered.",
+    "The changelog credits Pedro Miñano as a beta tester and contributor."
+  ],
+  "1.8.15": [
+    "Audio tracks and recording quality",
+    "Switch audio tracks from the player toolbar using the languages offered by each channel.",
+    "Choose a stereo audio track and record in 4K, 1080p, 720p or 480p. The same options are available for live and TV Guide recordings."
+  ],
+  "1.8.14": [
+    "Synchronized audio displays, programme details and local time",
+    "The level meter and audio spectrum follow the audio being played, including in the mini player.",
+    "Programme cards separate the synopsis, broadcast details and credits supplied by each channel.",
+    "The Live page shows a 24-hour local clock below the language selector."
+  ],
+  "1.8.13": [
+    "Stereo recordings and channel selection",
+    "Recordings are saved in 1080p at a constant frame rate with stereo AAC audio. Main programme audio takes priority over audio description.",
+    "Ubuntu builds accelerate video processing on ARM64 and Intel. The folder picker lets you browse, create a folder and choose where to save recordings.",
+    "The audio sync selector matches the language menu, marks the selected channel and tells you when no channels have been tuned yet."
+  ],
+  "1.8.12": [
+    "A language menu that matches the app",
+    "The language menu follows the Arkham TV theme, marks the active language and can be opened and dismissed with the keyboard."
+  ],
+  "1.8.11": [
+    "English and Spanish, with clearer channel quality",
+    "Switch between Spanish and English from the top bar. The player, guide, settings and changelog follow your choice.",
+    "Channel cards use SD, HD and UHD for the received resolution and show the measured size. The badge explains when it differs from the format advertised in the channel name."
+  ],
+  "1.8.10": [
+    "Clearer text and first launch on Snap",
+    "The bundled typeface keeps text aligned with icons. Headings have more breathing room, and the Snap shows channel logos on cards again.",
+    "The Snap includes the codecs and opens its native Ubuntu window without requiring a separate library installation."
+  ],
+  "1.8.9": ["First launch on Ubuntu", "The Ubuntu edition opens correctly on systems with both GTK 3 and GTK 4. The package installs the required libraries."],
+  "1.8.8": ["About Arkham TV", "The macOS About panel updates the developer credit and describes tuning, playback, recording and compatibility."],
+  "1.8.7": [
+    "New cards and easier access to the changelog",
+    "Channel cards give the logo, name and frequency more room. The Arkham TV octopus appears as a watermark, and a legend identifies SD, HD and UHD.",
+    "A bookmark replaces the star. Drag cards into Favourites or reorder them within the list.",
+    "Arkham TV saves detected video resolution and fixes damaged characters in names such as SX3/33 and La Séptima, including saved lists.",
+    "The changelog has an icon at the bottom of the sidebar. Its header credits the developer and opens without an outline around the title."
+  ],
+  "1.8.6": [
+    "Recordings and mini player",
+    "An HH:MM:SS timer below the video shows how long the recording has been running.",
+    "Play saved files in the main window with a Recording badge, or delete them from the library.",
+    "Minimizing the app moves live playback to a floating window with the channel, programme and audio spectrum.",
+    "New location moves to the left of the UHF range and scan controls, making the tuner panel shorter.",
+    "The footer links to the changelog, with the history of Arkham TV back to version 1.0."
+  ],
+  "1.8.5": ["Tuning in a new location", "New location is easier to spot, and Scan from scratch explains what the next scan will do."],
+  "1.8.4": [
+    "Recordings and antenna profiles",
+    "Record from the player or schedule a recording from the TV Guide. MP4 files are saved at 1080p in the folder you choose, with the title and date.",
+    "During a scheduled recording you can watch another channel on the same UHF frequency. Manual recordings stop when you change channel.",
+    "Save and load named lists for home, hotels or a portable antenna. The status indicator distinguishes antenna reception from the USB connection.",
+    "The vector logo retains transparency and adapts to light and dark mode."
+  ],
+  "1.8.3": [
+    "More reliable film details",
+    "The synopsis separates the plot from credits, even in compact descriptions from channels such as Cuatro and Be Mad.",
+    "Arkham TV verifies the OMDb key and looks up films when you open the programme card. You can choose the correct title if several results match."
+  ],
+  "1.8.2": ["Clearer antenna status", "An antenna icon indicates tuner status and has more space between it and the Appearance button."],
+  "1.8.1": [
+    "Readable synopses and pasting on macOS",
+    "Programme cards separate the synopsis from the original title, director, cast and other broadcast information.",
+    "The macOS Edit menu lets you paste an OMDb key from another app using ⌘V."
+  ],
+  "1.8.0": [
+    "What you’re watching",
+    "An expandable card below the video shows the programme, schedule, progress and synopsis. You can look up films on IMDb and get more details from OMDb.",
+    "The footer automatically identifies the connected tuner model."
+  ],
+  "1.7.2": [
+    "Steadier volume control and updated branding",
+    "The volume slider stays in place while you drag it, and the mute button keeps its width when toggled.",
+    "The app logo and icon have been updated."
+  ],
+  "1.7.1": [
+    "Live audio spectrum",
+    "A segmented bar display follows the energy in ten frequency bands, from 31 Hz to 16 kHz.",
+    "The footer identifies DVB-T compatibility with AVerMedia A835 and A835B."
+  ],
+  "1.7.0": [
+    "TV Guide and audio studio",
+    "A channel grid shows the schedule received over the antenna and lets you tune from a programme card.",
+    "A ten-band equalizer, presets such as Dialogue, Cinema, Night and Rock, and digital or analogue stereo meters. The active preset and curve are shown on the live page.",
+    "In full screen, the sound control hides after five seconds and reappears when you move the pointer.",
+    "Favourites move to a row below the live stream, before the channel catalogue.",
+    "macOS and Ubuntu use the same version numbers."
+  ],
+  "1.6.4": [
+    "Audio sync in both directions",
+    "On macOS, per-channel audio sync can correct voices that come before or after the picture.",
+    "About Arkham TV lists the developer credit and macOS compatibility separately."
+  ],
+  "1.6.3": ["AVerMedia A835B on Ubuntu", "Ubuntu recognizes the A835B with USB ID 07ca:3835 as well as the A835. Setup installs the firmware required by the IT9135 variant."],
+  "1.6.2": ["Graphical installation on Ubuntu", "The .deb packages install a launcher with the octopus icon, include FFmpeg and FFprobe, and list WebKitGTK and codecs as dependencies."],
+  "1.6.1": ["Playback on Ubuntu and Parallels", "The native window checks for H.264 codecs, and playback in Parallels has been adjusted to prevent a black screen."],
+  "1.6": ["Native window for Ubuntu", "Ubuntu Intel and ARM64 editions open in their own GTK window with WebKitGTK."],
+  "1.5": ["First Ubuntu edition", "Portable Intel and ARM64 executables launch a browser interface and support the A835 and Volar HD PRO family."],
+  "1.4.1": [
+    "An interface that adapts to the window",
+    "Video keeps its aspect ratio as the window is resized. Audio sync fields and buttons share the same height.",
+    "The horizontal volume slider uses the same green as the full screen control and responds better to dragging."
+  ],
+  "1.4": ["Audio sync by channel", "Settings lets you delay audio when voices play ahead of the picture and saves the offset for the next session."],
+  "1.3": [
+    "Channel logos and controls below the video",
+    "More national channel logos are matched by name, including HD variants. The macOS title is centred and the footer shows the version.",
+    "The horizontal volume slider sits next to Mute below the video. The full screen control remains vertical."
+  ],
+  "1.2": [
+    "Your favourite channels",
+    "Save favourites by dragging channels into the area or clicking the star. The footer credits the developer.",
+    "The full screen volume control becomes vertical and moves to the lower right."
+  ],
+  "1.1": [
+    "Arkham TV comes to the Mac desktop",
+    "The universal app for Intel and Apple Silicon includes firmware and playback tools. It scans for or restores channels at launch.",
+    "The design adds the octopus icon, light and dark palettes, shortcuts to Channels and Tuner, and channel logos.",
+    "The player lets you mute and unmute sound."
+  ],
+  "1.0": [
+    "Arkham TV’s first broadcast",
+    "The local web app tunes terrestrial TV with the AVerMedia A835 on macOS, scans UHF frequencies and filters channels by name.",
+    "The player shows live antenna broadcasts and supports full screen."
+  ]
+}

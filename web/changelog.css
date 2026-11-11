@@ -1,0 +1,117 @@
+#changelog { max-width: 1020px; }
+.release-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px 32px;
+  padding: clamp(18px, 4vw, 44px);
+  background: radial-gradient(ellipse at 100% 0%, var(--selected), transparent 75%), var(--panel);
+}
+.release-hero h1 { letter-spacing: -.025em; }
+#changelog-title:focus { outline: none; }
+.release-description { max-width: 58ch; margin-top: 12px; color: var(--muted); }
+.release-hero-version {
+  display: grid;
+  gap: 2px;
+  padding: 12px 19px;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--accent);
+}
+.release-hero-version span { font-size: 11px; font-weight: 700; }
+.release-hero-version strong { font-size: clamp(26px, 4vw, 40px); line-height: 1.15; font-variant-numeric: tabular-nums; }
+.release-dossier {
+  margin: 16px 0 0;
+  overflow: hidden;
+}
+.release-dossier-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 1;
+  object-fit: cover;
+  background: #17262c;
+}
+.release-dossier-caption {
+  padding: clamp(16px, 3vw, 26px) clamp(14px, 4vw, 32px);
+  background: radial-gradient(ellipse at 50% 0%, var(--selected), transparent 72%), var(--panel);
+}
+.release-dossier-heading { text-align: center; }
+.release-dossier-heading .eyebrow { margin: 0 0 4px; }
+.release-dossier-heading h2 {
+  margin: 0;
+  font-size: clamp(19px, 3vw, 28px);
+  line-height: 1.15;
+  letter-spacing: -.025em;
+}
+.release-dossier-credits {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 17px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+.release-dossier-credits > div { padding-inline: 8px; }
+.release-dossier-credits > div + div { border-inline-start: 1px solid var(--line); }
+.release-dossier-credits dt { font-size: clamp(15px, 2vw, 19px); font-weight: 750; line-height: 1.2; }
+.release-dossier-credits dd { margin: 4px 0 0; color: var(--muted); font-size: 12px; line-height: 1.35; }
+.release-heading { margin: 24px 0 14px; font-size: 18px; }
+.release-timeline { display: grid; gap: 12px; list-style: none; padding: 0; margin: 0; }
+.release-entry { position: relative; padding-inline-start: 22px; }
+.release-entry::before, .release-entry::after { content: ""; position: absolute; }
+.release-entry::before {
+  inset-block: 0 -12px; inset-inline-start: 4px; width: 1px; background: var(--line);
+}
+.release-entry:first-child::before { inset-block-start: 28px; }
+.release-entry:last-child::before { inset-block-end: auto; height: 28px; }
+.release-entry::after {
+  inset-block-start: 24px; inset-inline-start: 0; width: 9px; height: 9px; border-radius: 50%; background: var(--muted);
+}
+.release-current::after { background: var(--accent); box-shadow: 0 0 0 4px var(--selected); }
+.release-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  padding: 15px clamp(12px, 2.5vw, 24px);
+}
+.release-current .release-card { border-color: var(--accent); }
+.release-card h3 { margin: 0; font-size: clamp(15px, 2.1vw, 19px); line-height: 1.25; letter-spacing: -.018em; }
+.release-version {
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+.release-current .release-version { color: var(--accent-ink); background: var(--accent); }
+.release-notes { grid-column: 1 / -1; list-style: none; padding: 0; color: var(--muted); font-size: 13px; }
+.release-notes li { display: grid; grid-template-columns: 105px minmax(0, 1fr); align-items: baseline; gap: 10px; padding: 7px 0; }
+.release-notes li + li { border-top: 1px solid var(--line); }
+.release-category {
+  justify-self: start;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--label-dark);
+  font-size: 11px;
+  font-weight: 750;
+}
+[data-effective-mode="claro"] .release-category { color: var(--label-light); }
+.release-category[data-category="interfaz"] { --label-dark: #dfc5ff; --label-light: #623482; }
+.release-category[data-category="sintonia"] { --label-dark: #a9e993; --label-light: #325921; }
+.release-category[data-category="audio"] { --label-dark: #89e5db; --label-light: #125e58; }
+.release-category[data-category="reproduccion"] { --label-dark: #b0ccff; --label-light: #2e5093; }
+.release-category[data-category="compatibilidad"] { --label-dark: #f6d291; --label-light: #714715; }
+.release-category[data-category="guia"] { --label-dark: #f3b5d5; --label-light: #81365b; }
+.release-category[data-category="grabaciones"] { --label-dark: #ffb8aa; --label-light: #873e2e; }
+@media (max-width: 550px) {
+  .release-hero { grid-template-columns: 1fr; }
+  .release-hero-version { justify-self: start; }
+  .release-dossier-art { aspect-ratio: 2 / 1; }
+  .release-notes li { grid-template-columns: minmax(0, 1fr); gap: 3px; }
+}

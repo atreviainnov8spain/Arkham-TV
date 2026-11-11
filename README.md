@@ -4,6 +4,8 @@
 
 Arkham TV permite **ver y grabar la TDT en abierto** con un sintonizador USB AVerMedia AVerTV Volar compatible y una antena. Incluye guía de programación, selección de pista de audio, ecualizador de diez bandas, sincronización por canal, favoritos y perfiles de sintonización. La interfaz está disponible en español e inglés.
 
+El proyecto está pensado para quienes tienen un **A835 o A835B** y han dejado de poder usarlo con su software habitual. Arkham TV permite seguir aprovechando el sintonizador con un portátil y una antena, también al viajar. Los perfiles guardan la lista de canales de cada lugar.
+
 [Descargas de la versión 1.8.22](https://github.com/atreviainnov8spain/Arkham-TV/releases/tag/v1.8.22) · [Historial de cambios](assets/changelog.json) · [Licencia](LICENSE.md)
 
 ## Capturas
@@ -40,6 +42,17 @@ sudo apt install ./Arkham-TV-1.8.22-Ubuntu-ARM64.deb
 Abre **Arkham TV** desde el menú de aplicaciones. El paquete incorpora el lector DVB, FFmpeg y FFprobe. APT instala las dependencias del escritorio, entre ellas Python 3, GTK 3, WebKitGTK 4.1 y los complementos GStreamer para H.264 y AAC.
 
 La edición `.deb` usa el acceso que Ubuntu concede al usuario de la sesión gráfica a los dispositivos DVB. Puedes comprobar el sintonizador ejecutando `arkham-tv --diagnostico` con tu usuario habitual. El paquete Snap tiene su propio sistema de permisos.
+
+### Flatpak de prueba para ARM64
+
+El [paquete local de prueba](https://github.com/atreviainnov8spain/Arkham-TV/releases/tag/v1.8.22-flatpak.1) usa el entorno de ejecución de GNOME 49 y mantiene la versión 1.8.22. Instálalo desde la carpeta de descargas en un sistema ARM64 con Flatpak.
+
+```sh
+flatpak install --user --bundle ./Arkham-TV-1.8.22-ARM64-test.flatpak
+flatpak run io.github.atreviainnov8spain.ArkhamTVTest
+```
+
+El paquete de prueba incluye acceso a dispositivos para que Arkham TV use `/dev/dvb`. Sigue necesitando que Linux detecte el sintonizador y que la sesión de escritorio tenga acceso al adaptador. [Preparación de la publicación en Flathub](docs/flathub-preparacion.md)
 
 ### macOS
 

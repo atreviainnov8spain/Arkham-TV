@@ -33,7 +33,8 @@ except (ImportError, ValueError) as error:
 class Desktop(Gtk.Application):
     def __init__(self, data):
         flags = Gio.ApplicationFlags.NON_UNIQUE if os.environ.get("SNAP") else Gio.ApplicationFlags.FLAGS_NONE
-        super().__init__(application_id="com.arkhamtv.desktop", flags=flags)
+        application_id = os.environ.get("FLATPAK_ID", "com.arkhamtv.desktop")
+        super().__init__(application_id=application_id, flags=flags)
         self.data = data
         self.window = self.view = self.server = self.lock = None
         self.folder_picker = None

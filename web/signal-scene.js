@@ -141,12 +141,12 @@ export function createSignalScene(sky, host) {
     return { points, material, parallax: plane.parallax, drift: index + 1 };
   });
   host.replaceChildren(canvas);
-  sky.classList.add("iv-3d");
+  let needsValidation = true;
   canvas.addEventListener("webglcontextlost", event => {
     event.preventDefault();
     sky.classList.remove("iv-3d");
   });
-  canvas.addEventListener("webglcontextrestored", () => sky.classList.add("iv-3d"));
+  canvas.addEventListener("webglcontextrestored", () => { needsValidation = true; });
   let lastWidth=0,lastHeight=0;
   return function draw({ width, height, hubs, camera: [cx, cy, zoom], phase, accent }) {
     if (context.isContextLost()) return;
@@ -155,6 +155,7 @@ export function createSignalScene(sky, host) {
     if (width !== lastWidth || height !== lastHeight) {
       lastWidth=width; lastHeight=height;
       renderer.setSize(width,height);
+      needsValidation = true;
     }
     camera.left=-halfWidth; camera.right=halfWidth; camera.top=extent; camera.bottom=-extent;
     camera.position.x=(cx/50-1)*halfWidth; camera.position.y=(1-cy/50)*extent;
@@ -192,6 +193,21 @@ export function createSignalScene(sky, host) {
       ring.rotation.set(1.15,-.15,phase*.13+i*.7);
       hair.rotation.copy(ring.rotation);
     });
-    renderer.render(scene,camera);
+    try {
+      renderer.render(scene,camera);
+      if (needsValidation) {
+        needsValidation = false;
+        // Some virtual GPUs report a complete framebuffer before failing on readback.
+        context.readPixels(0, 0, 1, 1, context.RGBA, context.UNSIGNED_BYTE, new Uint8Array(4));
+        if (context.getError() !== context.NO_ERROR) {
+          throw new Error("WebGL framebuffer could not render the channel universe");
+        }
+        sky.classList.add("iv-3d");
+      }
+    } catch (error) {
+      sky.classList.remove("iv-3d");
+      canvas.remove();
+      throw error;
+    }
   };
 }

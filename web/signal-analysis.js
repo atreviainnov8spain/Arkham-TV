@@ -326,7 +326,12 @@ function createSignalAnalysis({ api, tune }) {
         pulse.style.opacity = String(.26 + .74 * Math.sin(Math.PI * t));
       });
     }
-    scene?.({ width, height, hubs, camera: position, phase, accent });
+    try {
+      scene?.({ width, height, hubs, camera: position, phase, accent });
+    } catch (error) {
+      scene = null;
+      console.warn("Signal analysis WebGL:", error);
+    }
   }
   function refreshAccent() {
     accent = getComputedStyle(sky).getPropertyValue("--sky-accent").trim() || "#b5ec70";

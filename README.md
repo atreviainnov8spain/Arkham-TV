@@ -6,7 +6,7 @@ Arkham TV permite **ver y grabar la TDT en abierto** en macOS y Linux. Puedes co
 
 El proyecto empezó para recuperar el uso de los sintonizadores **AVerMedia A835 y A835B**. En Linux también funciona con otros sintonizadores DVB-T o DVB-T2 que el sistema reconozca como dispositivos DVB. Los perfiles guardan la lista de canales de cada lugar.
 
-[Arkham TV en Snap Store](https://snapcraft.io/arkham-tv) · [Descargas de GitHub](https://github.com/atreviainnov8spain/Arkham-TV/releases) · [Historial de cambios](assets/changelog.json) · [Licencia](LICENSE.md)
+[Arkham TV en Snap Store](https://snapcraft.io/arkham-tv) · [Descargar Arkham TV 1.10](https://github.com/atreviainnov8spain/Arkham-TV/releases/tag/v1.10) · [Historial de cambios](assets/changelog.json) · [Licencia](LICENSE.md)
 
 ## Novedades de la 1.10
 
@@ -38,7 +38,7 @@ Para usar un sintonizador de antena directa en una instalación nueva, habilita 
 
 ### Ubuntu Desktop con paquete .deb
 
-El repositorio contiene el código de la **1.10**. La última descarga de GitHub incluye los paquetes **1.8.22** para AMD64 y ARM64. Los instaladores de la 1.10 se pueden generar con los pasos de compilación descritos abajo. [Descargas de la 1.8.22](https://github.com/atreviainnov8spain/Arkham-TV/releases/tag/v1.8.22)
+Descarga el paquete **1.10** de tu arquitectura. [Ubuntu AMD64 (Intel y AMD de 64 bits)](https://github.com/atreviainnov8spain/Arkham-TV/releases/download/v1.10/Arkham-TV-1.10-Ubuntu-Intel-x86_64.deb) · [Ubuntu ARM64](https://github.com/atreviainnov8spain/Arkham-TV/releases/download/v1.10/Arkham-TV-1.10-Ubuntu-ARM64.deb)
 
 Abre el paquete de tu arquitectura en el **Centro de aplicaciones** de Ubuntu. También puedes instalar el archivo con `sudo apt install ./nombre-del-paquete.deb` desde la carpeta de descargas. A continuación, abre **Arkham TV** desde el menú de aplicaciones. El paquete incluye el lector DVB, FFmpeg y FFprobe. Ubuntu instala las dependencias del escritorio.
 
@@ -57,7 +57,7 @@ El paquete de prueba incluye acceso a dispositivos para que Arkham TV use `/dev/
 
 ### macOS
 
-La aplicación requiere macOS 12.3 o posterior y funciona en Intel y Apple Silicon. El ZIP universal de GitHub corresponde a la 1.8.22. Para generar la 1.10, sigue las instrucciones de compilación de macOS. La app empaquetada incluye Python, los códecs y el lector USB. [Descargas de GitHub](https://github.com/atreviainnov8spain/Arkham-TV/releases)
+Descarga el ZIP universal de **Arkham TV 1.10**, descomprímelo y abre **Arkham TV.app**. Requiere macOS 12.3 o posterior y funciona en Intel y Apple Silicon. La app incluye Python, los códecs y el lector USB. [macOS Universal](https://github.com/atreviainnov8spain/Arkham-TV/releases/download/v1.10/Arkham-TV-1.10-macOS-Universal.zip)
 
 ## Ver un receptor por HDMI
 

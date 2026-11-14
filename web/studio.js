@@ -130,6 +130,7 @@ function createAudioStudio({ api, action, video, playingStream, playbackDate }) 
   drawPreview();
 
   const meter = el("meter-display");
+  const meterState = el("meter-state");
   const meterButtons = [...el("meter-modes").querySelectorAll("button")];
   const spectrumChart = el("spectrum-chart");
   const spectrumState = el("spectrum-state");
@@ -142,7 +143,7 @@ function createAudioStudio({ api, action, video, playingStream, playbackDate }) 
     track.className = "spectrum-track";
     track.setAttribute("role", "meter");
     track.setAttribute("aria-label", hz + (arkhamLanguage.language === "en" ? " hertz" : " hercios"));
-    track.setAttribute("aria-valuemin", "-60");
+    track.setAttribute("aria-valuemin", "-72");
     track.setAttribute("aria-valuemax", "0");
     const label = document.createElement("span");
     label.setAttribute("aria-hidden", "true");
@@ -162,6 +163,23 @@ function createAudioStudio({ api, action, video, playingStream, playbackDate }) 
   let active = false;
   let timer = 0;
   let nextSampleRequest = 0;
+  let lastAudioSample = -Infinity;
+  let heldSample;
+  let paintedLevels;
+  let lastPaint = 0;
+
+  function updateMeterCaptions(sample, now) {
+    const stream = playingStream();
+    const muted = video.muted || video.volume === 0;
+    if (!stream || video.paused || muted) lastAudioSample = -Infinity;
+    else if (sample) lastAudioSample = now;
+    const recent = Boolean(stream) && !video.paused && !muted && now - lastAudioSample < 1600;
+    const inactive = !stream ? "En espera" : video.paused ? "En pausa" : muted ? "Silenciado" : "Sin señal de audio";
+    const meterLabel = arkhamLanguage.t(recent ? "Nivel / pico" : inactive);
+    const spectrumLabel = arkhamLanguage.t(recent ? "En directo" : inactive);
+    if (meterState.textContent !== meterLabel) meterState.textContent = meterLabel;
+    if (spectrumState.textContent !== spectrumLabel) spectrumState.textContent = spectrumLabel;
+  }
 
   function buildMeter() {
     meter.classList.toggle("meter-analog", mode === "analog");
@@ -191,16 +209,30 @@ function createAudioStudio({ api, action, video, playingStream, playbackDate }) 
   }
 
   function paintMeter(sample) {
-    const current = playingStream();
     const muted = video.muted || video.volume === 0;
     const trim = muted ? -60 : 20 * Math.log10(video.volume);
     const shown = Boolean(sample) && !muted;
-    const inactive = !current ? arkhamLanguage.t("En espera") : video.paused ? arkhamLanguage.t("En pausa") : muted ? arkhamLanguage.t("Silenciado") : arkhamLanguage.t("Sin señal de audio");
     const [, levels, peaks, bands] = sample || [];
-    el("meter-state").textContent = shown ? arkhamLanguage.t("Nivel / pico") : inactive;
+    const now = performance.now();
+    const elapsed = Math.min(now - lastPaint, 100);
+    lastPaint = now;
+    if (!shown) paintedLevels = null;
+    const next = (value, previous, attack, release, floor = -60) => {
+      const target = Math.max(floor, value + trim);
+      if (previous === undefined) return target;
+      const smoothing = target > previous ? attack : release;
+      return previous + (target - previous) * (1 - Math.exp(-elapsed / smoothing));
+    };
+    if (shown) {
+      paintedLevels = {
+        rms: levels.map((value, i) => next(value, paintedLevels?.rms[i], 34, 180)),
+        peak: peaks.map((value, i) => next(value, paintedLevels?.peak[i], 18, 300)),
+        bands: bands.map((value, i) => next(value, paintedLevels?.bands[i], 36, 210, -72)),
+      };
+    }
     gauges.forEach(({ instrument, number, needle }, index) => {
-      const rms = shown ? Math.max(-60, Math.round(levels[index] + trim)) : -60;
-      const peak = shown ? Math.max(-60, Math.round(peaks[index] + trim)) : -60;
+      const rms = shown ? Math.round(paintedLevels.rms[index]) : -60;
+      const peak = shown ? Math.round(paintedLevels.peak[index]) : -60;
       instrument.style.setProperty("--level", (rms + 60) / 60 * 100 + "%");
       instrument.style.setProperty("--peak", (peak + 60) / 60 * 100 + "%");
       if (needle) needle.setAttribute("transform", "rotate(" + (-78 + (rms + 60) * 2.6) + " 60 56)");
@@ -208,16 +240,16 @@ function createAudioStudio({ api, action, video, playingStream, playbackDate }) 
       instrument.setAttribute("aria-valuetext", rms <= -60 ? arkhamLanguage.t("Por debajo de −60 dBFS") : signed(rms) + " dBFS");
       number.textContent = shown ? (peak <= -60 ? "−∞" : signed(peak)) : "—";
     });
-    const spectrum = shown ? bands : null;
-    spectrumState.textContent = spectrum ? arkhamLanguage.t("En directo") : inactive;
+    const spectrum = paintedLevels?.bands;
     spectrumBars.forEach((track, index) => {
-      const level = spectrum ? Math.max(-60, Math.round(spectrum[index] + trim)) : -60;
-      const steps = Math.floor((level + 60) * 16 / 60);
+      const level = spectrum ? Math.round(spectrum[index]) : -72;
+      // Reserve most of the display for the quieter levels found in individual bands.
+      const steps = Math.floor(level <= -30 ? (level + 72) * 12 / 42 : 12 + (level + 30) * 4 / 30);
       const masked = (100 - steps * 6.25) + "%";
       track.style.setProperty("--spectrum-hidden", masked);
       miniBars[index].style.setProperty("--spectrum-hidden", masked);
       track.setAttribute("aria-valuenow", level);
-      track.setAttribute("aria-valuetext", level <= -60 ? arkhamLanguage.t("Por debajo de −60 dBFS") : signed(level) + " dBFS");
+      track.setAttribute("aria-valuetext", level <= -72 ? arkhamLanguage.t("Por debajo de −72 dBFS") : signed(level) + " dBFS");
     });
   }
 
@@ -229,13 +261,23 @@ function createAudioStudio({ api, action, video, playingStream, playbackDate }) 
   }
 
   function sampleAt(position) {
-    return Number.isFinite(position)
-      ? samples.find(([at]) => at <= position + 0.001 && at > position - 0.04) ?? null : null;
+    if (!Number.isFinite(position)) {
+      heldSample = null;
+      return null;
+    }
+    for (let index = samples.length - 1; index >= 0; index--) {
+      const sample = samples[index];
+      if (sample[0] > position + 0.004) continue;
+      if (sample[0] > position - 0.125) heldSample = sample;
+      break;
+    }
+    return heldSample && heldSample[0] <= position + 0.004 && heldSample[0] > position - 0.22 ? heldSample : null;
   }
 
   function paintCurrentSample() {
     const sample = sampleStream === playingStream() ? sampleAt(audiblePosition()) : null;
     paintedSample = sample;
+    updateMeterCaptions(sample, performance.now());
     paintMeter(sample);
   }
 
@@ -244,7 +286,10 @@ function createAudioStudio({ api, action, video, playingStream, playbackDate }) 
     if (sampleStream !== stream) {
       sampleStream = stream;
       samples = [];
+      heldSample = null;
+      paintedLevels = null;
       nextSampleRequest = 0;
+      lastAudioSample = -Infinity;
       paintCurrentSample();
     }
     const position = audiblePosition();
@@ -252,11 +297,12 @@ function createAudioStudio({ api, action, video, playingStream, playbackDate }) 
       nextSampleRequest = now + 500;
       const request = nextSampleRequest;
       api("levels?" + new URLSearchParams({ stream, at: position })).then(result => {
-        if (sampleStream === stream && nextSampleRequest === request) samples = result;
+        if (sampleStream === stream && nextSampleRequest === request) samples = result.sort((a, b) => a[0] - b[0]);
       }).catch(() => {});
     }
     const sample = sampleAt(position);
-    if (sample !== paintedSample) {
+    updateMeterCaptions(sample, now);
+    if (sample !== paintedSample || (sample && now - lastPaint >= 32)) {
       paintedSample = sample;
       paintMeter(sample);
     }
@@ -271,7 +317,14 @@ function createAudioStudio({ api, action, video, playingStream, playbackDate }) 
     });
   }
   for (const event of ["volumechange", "pause", "playing", "seeking", "waiting", "emptied"]) {
-    video.addEventListener(event, () => { if (active) paintCurrentSample(); });
+    video.addEventListener(event, () => {
+      if (event === "seeking" || event === "emptied") {
+        heldSample = null;
+        samples = [];
+        nextSampleRequest = 0;
+      }
+      if (active) paintCurrentSample();
+    });
   }
   buildMeter();
 
@@ -297,7 +350,7 @@ function createAudioStudio({ api, action, video, playingStream, playbackDate }) 
       } else {
         apply.disabled = !ready || busy || !edit;
       }
-      if (active && !playingStream()) paintMeter(null);
+      if (active && !playingStream()) paintCurrentSample();
     },
   };
 }
@@ -394,7 +447,7 @@ function createGuide({ api, action, tune, chooseCapture }) {
     const currentMinute = Math.floor(current / 60);
     const end = start + duration;
     const blocked = pending || state.scan.state === "running" || !state.hardware.ready;
-    refresh.disabled = blocked || !state.channels.length || Boolean(state.recordingUhf);
+    refresh.disabled = blocked || !state.channels.length || state.recordingUhf != null;
     if (detail.open) {
       watch.disabled = blocked;
       updateRecord();

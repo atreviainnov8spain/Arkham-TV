@@ -7,6 +7,7 @@ import threading
 
 from .guide import EIT
 from .audio_tracks import AudioTracks
+from .teletext import Teletext
 
 
 class TransportFeed:
@@ -55,11 +56,13 @@ class TransportFeed:
 
 
 class Transport:
-    def __init__(self, command, channel, guide, data, cwd):
+    def __init__(self, command, channel, guide, data, cwd, *, analysis=None, teletext=False):
+        self.analysis = analysis
         self.uhf = channel["uhf"]
         self.frequency = channel["frequency"]
-        self.audio = AudioTracks()
-        self.reader = EIT(channel["frequency"], self.audio)
+        self.teletext = Teletext() if teletext else None
+        self.audio = AudioTracks(self.on_table if analysis or self.teletext else None)
+        self.reader = EIT(channel["frequency"], self.audio, analysis, self.teletext)
         self.guide = guide
         self.log = Path(data) / "sintonizador.log"
         self.lock = threading.Lock()
@@ -67,6 +70,12 @@ class Transport:
         with self.log.open("wb") as log:
             self.process = subprocess.Popen(command, cwd=cwd, stdout=subprocess.PIPE, stderr=log)
         self.worker = threading.Thread(target=self.read, daemon=True)
+
+    def on_table(self, section):
+        if self.analysis:
+            self.analysis.table(section)
+        if self.teletext:
+            self.teletext.table(section)
 
     def attach(self, destination, *, buffer_bytes=None):
         feed = TransportFeed(destination, buffer_bytes=buffer_bytes)
@@ -88,6 +97,8 @@ class Transport:
                             feed.offer(chunk)
                     if changes := self.reader.feed(chunk):
                         self.guide.update(changes)
+                    if self.analysis:
+                        self.analysis.commit()
             except OSError:
                 pass
             finally:

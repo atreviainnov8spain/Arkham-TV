@@ -50,7 +50,10 @@ function createCaptureOptions({ action, current }) {
     if (!live) {
       let saved;
       try { saved = localStorage.getItem(qualityKey); } catch { /* Optional preference. */ }
-      form.elements.quality.value = Object.hasOwn(recordingQualities, saved) ? saved : "1080";
+      const hdmi = Boolean(channel.hdmi);
+      const fourK = form.querySelector('input[name="quality"][value="2160"]');
+      fourK.disabled = fourK.closest("label").hidden = hdmi;
+      form.elements.quality.value = Object.hasOwn(recordingQualities, saved) && !(hdmi && saved === "2160") ? saved : "1080";
     }
     const tracks = channel.audioTracks || [];
     const main = tracks.find(track => !track.role) || tracks[0];
@@ -82,7 +85,8 @@ function createCaptureOptions({ action, current }) {
       return label;
     }));
     note.hidden = tracks.length > 0 || live;
-    note.textContent = t("Las pistas aún no se han detectado. Puedes sintonizar el canal para ver qué idiomas ofrece.");
+    note.textContent = t(channel.hdmi ? "Se graba el audio que envía el receptor por HDMI."
+      : "Las pistas aún no se han detectado. Puedes sintonizar el canal para ver qué idiomas ofrece.");
     el("capture-submit").disabled = live && !tracks.length;
     return new Promise((done) => {
       resolve = done;
@@ -253,7 +257,8 @@ function createRecordings({ action, openRecording, chooseCapture }) {
     if (active) await change("recording-stop", { id: active.id }, "", liveStatus);
     else {
       const stream = currentState?.stream;
-      const channel = currentState?.channels.find(item => item.id === stream?.channel);
+      const channel = stream?.hdmi ? { id: stream.channel, name: stream.hdmi.name, hdmi: true }
+        : currentState?.channels.find(item => item.id === stream?.channel);
       if (!channel) return;
       const options = await chooseCapture({ channel, title: currentState.program?.title, audioPid: stream.audioPid });
       if (!options) return;
@@ -352,7 +357,7 @@ function createRecordings({ action, openRecording, chooseCapture }) {
     openLibraryFolder.disabled = pending || !folderValue;
     openVideoFolder.disabled = pending || !playbackId;
     const status = active ? active.state === "finishing" ? arkhamLanguage.t("Guardando la grabación…")
-      : `Grabando «${active.title}» · ${active.manual ? arkhamLanguage.t("Se detiene al cambiar de canal.") :
+      : `Grabando «${active.title}» · ${active.channel.id === "hdmi" ? arkhamLanguage.t("Entrada HDMI") : active.manual ? arkhamLanguage.t("Se detiene al cambiar de canal.") :
         arkhamLanguage.f("Puedes ver otros canales de UHF {uhf}.", "You can watch other channels on UHF {uhf}.", active.channel)}` : "";
     if (liveLabel !== active?.id || active) {
       if (liveStatus.textContent !== status) liveStatus.textContent = status;
@@ -361,7 +366,7 @@ function createRecordings({ action, openRecording, chooseCapture }) {
     live.toggleAttribute("data-recording", Boolean(active));
     el("record-live-label").textContent = active ? active.manual ? arkhamLanguage.t("Detener grabación") : arkhamLanguage.t("Grabando") : arkhamLanguage.t("Grabar");
     live.disabled = pending || Boolean(active && (!active.manual || active.state === "finishing"))
-      || (!active && (!state.hardware.ready || !state.stream?.ready || state.scan.state === "running"));
+      || (!active && ((!state.hardware.ready && !state.stream?.hdmi) || !state.stream?.ready || state.scan.state === "running"));
     const nextKey = JSON.stringify(jobs);
     if (key !== nextKey) {
       key = nextKey;

@@ -1,4 +1,32 @@
 [
+  {"version":"1.10","title":"Televisión desde un receptor HDMI","changes":[
+    ["compatibilidad","En macOS y Linux (ARM64 e Intel/AMD de 64 bits), conecta el Edision nano T265+ u otro receptor TDT con salida HDMI mediante una capturadora USB compatible."],
+    ["interfaz","En Linux, confirma el acceso al vídeo y al audio desde Entrada HDMI. El Snap necesita las conexiones de cámara y captura de audio."],
+    ["reproduccion","Abre Entrada HDMI en En directo, elige el vídeo y el audio de la capturadora y sintoniza o cambia de canal con el mando del receptor."],
+    ["grabaciones","Graba la entrada HDMI hasta 1080p con sonido estéreo o compártela en el móvil. El sintonizador USB sigue ofreciendo sus propias funciones de antena."],
+    ["interfaz","En macOS y Linux, En directo incorpora modos de imagen y un ajuste personal para brillo, contraste, nitidez y color."]
+  ]},
+  {"version":"1.9","title":"Invisible TV · Análisis de señal y Teletexto","changes":[
+    ["interfaz","En macOS y Linux, explora las frecuencias sintonizadas como planetas en 3D y acércate para ver sus canales. El canal en directo se distingue por su brillo."],
+    ["sintonia","Selecciona un canal para consultar las mediciones reales de recepción y sus pistas de vídeo, audio, subtítulos y teletexto."],
+    ["interfaz","Las vistas Flujos y Cronología muestran cómo se reparte el caudal de datos y qué ha cambiado en la emisión."],
+    ["interfaz","La guía visual cambia con cada pestaña, el selector agrupa los canales por UHF y el menú lateral se puede plegar. El botón Volver al universo recupera la vista completa."],
+    ["interfaz","La conexión activa se dibuja con pulsos circulares iridiscentes. Flujos muestra la proporción de cada tipo de dato y Anatomía agrupa las pistas del canal."],
+    ["interfaz","Teletexto añade un índice visual para las páginas recibidas por antena, con acceso por número, lectura cómoda y vista original en cuadrícula. Disponible en macOS y Linux."],
+    ["sintonia","El teletexto de La 1 HD se carga automáticamente al recibir el índice. Su selector de canales comparte el diseño y los grupos por frecuencia de Análisis de señal."],
+    ["interfaz","La vista de lectura de Teletexto conserva los acentos de la emisora, separa las columnas de los índices y distingue los enlaces de las cifras del texto."],
+    ["interfaz","El menú lateral muestra el símbolo verde y el nombre Arkham TV al desplegarse. Plegado, muestra solo el símbolo."]
+  ]},
+  {"version":"1.8.24","title":"Televisión en directo en el móvil","changes":[
+    ["reproduccion","Abre Ver en el móvil y escanea el QR desde un iPhone o Android conectado a la misma red Wi-Fi."],
+    ["interfaz","Al girar el móvil, la emisión ocupa la pantalla. Puedes reducir el reproductor con un botón o abrir la Guía TV para cambiar el canal compartido."],
+    ["reproduccion","Puedes detener la sesión móvil desde el ordenador. El cambio de canal desde el móvil se bloquea durante una grabación."]
+  ]},
+  {"version":"1.8.23","title":"Más sintonizadores DVB-T y DVB-T2 en Ubuntu","changes":[
+    ["compatibilidad","Arkham TV detecta los sintonizadores DVB-T y DVB-T2 que Ubuntu reconoce. Los AVerMedia A835 y A835B siguen siendo compatibles con DVB-T."],
+    ["sintonia","La búsqueda comprueba los estándares que admite el sintonizador y prueba DVB-T2 si el dispositivo admite ambos y no encuentra señal DVB-T en esa frecuencia."],
+    ["interfaz","En Linux, el porcentaje del volumen queda centrado y mantiene el mismo ancho al cambiar de valor."]
+  ]},
   {"version":"1.8.22","title":"Grabación 4K más estable","changes":[
     ["grabaciones","Las grabaciones toleran pausas breves del codificador sin interrumpir el directo ni detenerse al empezar."],
     ["grabaciones","Si el equipo o el almacenamiento no siguen el ritmo de la emisión, la aplicación muestra un aviso distinto al de pérdida de señal."]

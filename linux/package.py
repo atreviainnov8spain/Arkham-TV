@@ -56,9 +56,9 @@ def package_deb(zig, work, executable, arch, version):
         "Section: video\nPriority: optional\nMaintainer: Óscar Peña\n"
         "Depends: python3, python3-gi, gir1.2-gtk-3.0, gir1.2-gstreamer-1.0, "
         "gir1.2-webkit2-4.1, gstreamer1.0-plugins-good, gstreamer1.0-plugins-bad, "
-        "gstreamer1.0-libav, util-linux\n"
+        "gstreamer1.0-libav, gstreamer1.0-tools, gstreamer1.0-pulseaudio, util-linux, pulseaudio-utils\n"
         "Description: Digital terrestrial television for Ubuntu\n"
-        " Arkham TV scans and plays DVB-T channels in a GTK window.\n",
+        " Arkham TV plays DVB-T channels and USB HDMI capture in a GTK window.\n",
         encoding="utf-8",
     )
     with tarfile.open(work / "control.tar.gz", "w:gz", format=tarfile.USTAR_FORMAT) as archive:

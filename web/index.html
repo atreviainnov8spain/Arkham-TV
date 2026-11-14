@@ -9,22 +9,56 @@
   <link rel="icon" href="/assets/logo_arkhamtv.png" type="image/png">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/studio.css">
+  <link rel="stylesheet" href="/picture.css">
   <link rel="stylesheet" href="/program.css">
   <link rel="stylesheet" href="/changelog.css">
+  <link rel="stylesheet" href="/mobile-share.css">
   <script src="/language.js" defer></script>
   <script src="/hls.min.js" defer></script>
   <script src="/assets/canales/catalogo.js" defer></script>
   <script src="/studio.js" defer></script>
+  <script src="/picture.js" defer></script>
   <script src="/program.js" defer></script>
   <script src="/playback.js" defer></script>
   <script src="/recordings.js" defer></script>
+  <!-- SIGNAL_ASSETS -->
   <script src="/tv.js" defer></script>
+  <script src="/qrcode.js" defer></script>
+  <script src="/mobile-share.js" defer></script>
 </head>
 <body>
   <svg class="icons" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <symbol id="i-live" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="m8 3 4 3 4-3m-6 7 5 3-5 3z"/></symbol>
+    <symbol id="i-teletext" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="15" rx="2"/><path d="M7 8h10M7 12h4m3 0h3M7 15h4m3 0h3"/></symbol>
     <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
-    <symbol id="i-signal" viewBox="0 0 24 24"><path d="M5 20v-4m5 4v-7m5 7V9m5 11V4"/></symbol>
+    <symbol id="i-tuner" viewBox="0 0 24 24">
+      <!-- Lucide Antenna. Copyright (c) 2026 Lucide Icons and Contributors.
+           Permission to use, copy, modify, and/or distribute this software for any
+           purpose with or without fee is hereby granted, provided that the above
+           copyright notice and this permission notice appear in all copies. -->
+      <path d="M2 12 7 2m0 10 5-10m0 10 5-10m0 10 5-10M4.5 7h15M12 16v6"/>
+    </symbol>
+    <symbol id="i-signal-book" viewBox="0 0 24 24"><path d="M12 20V6M3 5a11 11 0 0 1 9 2 11 11 0 0 1 9-2v14a11 11 0 0 0-9 2 11 11 0 0 0-9-2zM6 9l3 1m-3 3 3 1m6-4 3-1m-3 5 3-1"/></symbol>
+    <symbol id="i-rail-toggle" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+    <symbol id="i-signal-back" viewBox="0 0 24 24"><path d="m11 6-6 6 6 6m-6-6h14"/></symbol>
+    <symbol id="i-signal-flows" viewBox="0 0 24 24"><path d="M3 19h18M6 15v-4m6 4V5m6 10V8"/></symbol>
+    <symbol id="i-signal-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5zm-9 9 9 5 9-5M3 16l9 5 9-5"/></symbol>
+    <symbol id="i-signal-captions" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M6 12h4m3 0h5M6 15h7m3 0h2"/></symbol>
+    <symbol id="i-signal-planet" viewBox="0 0 64 48">
+      <circle cx="31" cy="24" r="12"/>
+      <ellipse cx="31" cy="24" rx="24" ry="8" transform="rotate(-24 31 24)"/>
+      <path d="M23 20a9 9 0 0 1 6-5m24-4v6m-3-3h6M9 34h.01m42 4h.01"/>
+    </symbol>
+    <symbol id="i-signal-satellite" viewBox="0 0 64 48">
+      <path d="M9 33c7-19 20-24 37-18M15 36c13 1 25-2 33-10" stroke-dasharray="2 4"/>
+      <circle cx="16" cy="31" r="4"/><circle cx="34" cy="17" r="3"/>
+      <circle cx="48" cy="23" r="7"/><circle cx="48" cy="23" r="2" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-signal-pulse" viewBox="0 0 64 48">
+      <path d="M4 26h12l5-8 7 15 6-11 4 4h20M50 17a12 12 0 0 1 0 18m5-22a17 17 0 0 1 0 26" />
+      <circle cx="41" cy="26" r="3" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-orbit" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5"/><ellipse cx="12" cy="12" rx="10" ry="5.5" transform="rotate(-35 12 12)"/><path d="M5.7 13.5h.01M18 7.5h.01"/></symbol>
     <symbol id="i-antenna" viewBox="0 0 24 24">
       <path d="M5 5a10 10 0 0 0 0 14m14 0a10 10 0 0 0 0-14M8 8a6 6 0 0 0 0 8m8 0a6 6 0 0 0 0-8M12 14v7m-3 0h6"/>
       <circle cx="12" cy="12" r="2"/>
@@ -38,6 +72,8 @@
     <symbol id="i-bookmark-plus" viewBox="0 0 24 24"><path d="M6 5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16l-6-4-6 4zM12 7v6m-3-3h6"/></symbol>
     <symbol id="i-bookmark-check" viewBox="0 0 24 24"><path d="M6 5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16l-6-4-6 4zm3 5 2 2 4-4"/></symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12m0-12L6 18"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></symbol>
+    <symbol id="i-hdmi" viewBox="0 0 24 24"><path d="M3 6h18v8l-4 4H7l-4-4zM8 10v3m4-3v3m4-3v3"/></symbol>
     <symbol id="i-volume" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zm12-1a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></symbol>
     <symbol id="i-muted" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zm12 0 5 6m0-6-5 6"/></symbol>
     <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
@@ -57,16 +93,21 @@
 
   <div class="app">
     <aside class="rail">
+      <button id="rail-toggle" type="button" aria-controls="main-nav" aria-expanded="true" hidden>
+        <svg aria-hidden="true"><use href="#i-rail-toggle"/></svg>
+      </button>
       <a class="brand" href="#directo" aria-label="Arkham TV, en directo">
-        <img class="brand-dark" src="/assets/logo_arkhamtv.svg" alt="" width="2166" height="721">
-        <img class="brand-light" src="/assets/logo_arkhamtv-claro.svg" alt="" width="2166" height="721">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name" aria-hidden="true">Arkham TV</span>
       </a>
-      <nav class="nav" aria-label="Navegación">
+      <nav id="main-nav" class="nav" aria-label="Navegación">
         <a href="#directo" class="nav-link" aria-current="location"><svg aria-hidden="true"><use href="#i-live"/></svg><span>En directo</span></a>
         <a href="#guia" class="nav-link"><svg aria-hidden="true"><use href="#i-guide"/></svg><span>Guía TV</span></a>
         <a href="#canales" class="nav-link"><svg aria-hidden="true"><use href="#i-grid"/></svg><span>Canales</span></a>
+        <a href="#teletexto" id="teletext-nav" class="nav-link" hidden><svg aria-hidden="true"><use href="#i-teletext"/></svg><span data-en="Teletext">Teletexto</span></a>
         <a href="#ecualizador" class="nav-link"><svg aria-hidden="true"><use href="#i-eq"/></svg><span>Ecualizador</span></a>
-        <a href="#sintonizador" class="nav-link"><svg aria-hidden="true"><use href="#i-signal"/></svg><span>Sintonizador</span></a>
+        <a href="#sintonizador" class="nav-link"><svg aria-hidden="true"><use href="#i-tuner"/></svg><span>Sintonizador</span></a>
+        <a href="#analisis" id="signal-nav" class="nav-link" hidden><svg aria-hidden="true"><use href="#i-orbit"/></svg><span data-en="Signal analysis">Análisis de señal</span></a>
         <a href="#grabaciones" class="nav-link"><svg aria-hidden="true"><use href="#i-record"/></svg><span>Grabaciones</span></a>
         <a href="#configuracion" class="nav-link"><svg aria-hidden="true"><use href="#i-settings"/></svg><span>Configuración</span></a>
         <div class="nav-secondary">
@@ -142,10 +183,14 @@
           <div class="viewer" aria-label="Reproductor">
             <div class="screen" id="screen">
               <video id="video" playsinline preload="auto" aria-label="Televisión en directo" hidden></video>
+              <canvas id="picture-output" aria-hidden="true" hidden></canvas>
               <div id="screen-message" class="screen-message" role="status">
                 <svg aria-hidden="true"><use href="#i-live"/></svg>
                 <h2 id="screen-title">Preparando la emisión</h2>
                 <p id="screen-detail">Estamos conectando con tu antena.</p>
+                <button type="button" id="screen-hdmi-open" class="button secondary" aria-haspopup="dialog" aria-controls="hdmi-dialog" data-hdmi-open hidden>
+                  <svg aria-hidden="true"><use href="#i-hdmi"/></svg><span data-en="Open HDMI input">Abrir entrada HDMI</span>
+                </button>
               </div>
               <span class="screen-tag"><span class="status-dot" id="on-air"></span><span id="player-state">CONECTANDO</span></span>
               <a href="/restaurar-ventana" class="fullscreen mini-restore" aria-label="Volver a la ventana principal" title="Volver a la ventana principal">
@@ -181,6 +226,12 @@
             <div class="player-meta">
               <div><p id="channel-name">Televisión en directo</p><p id="channel-frequency">Señal de antena · TDT</p></div>
               <div class="player-actions">
+                <button type="button" id="hdmi-open" class="button secondary" aria-haspopup="dialog" aria-controls="hdmi-dialog" data-hdmi-open hidden>
+                  <svg aria-hidden="true"><use href="#i-hdmi"/></svg><span data-en="HDMI input">Entrada HDMI</span>
+                </button>
+                <button type="button" id="mobile-share-open" class="button secondary" aria-haspopup="dialog" aria-controls="mobile-share" disabled>
+                  <svg aria-hidden="true"><use href="#i-phone"/></svg><span>Ver en el móvil</span>
+                </button>
                 <button type="button" id="live-audio" class="button secondary" aria-haspopup="dialog" aria-controls="capture-options" title="Elegir pista de audio" disabled hidden>
                   <svg aria-hidden="true"><use href="#i-language"/></svg><span id="live-audio-label">Audio</span>
                   <svg class="choice-chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
@@ -272,10 +323,40 @@
           </aside>
           <aside class="spectrum-panel panel" aria-labelledby="spectrum-title">
             <div class="section-head"><h2 id="spectrum-title">Espectro de audio</h2><span class="soft-tag">10 BANDAS</span></div>
-            <div id="spectrum-chart" class="spectrum-chart" aria-label="Nivel por frecuencia en dBFS"></div>
+            <div id="spectrum-chart" class="spectrum-chart" aria-label="Nivel por frecuencia en dBFS">
+              <div class="spectrum-axis" aria-hidden="true"><span>0</span><span>−30</span><span>−72</span></div>
+            </div>
             <div class="meter-caption"><span id="spectrum-state">En espera</span><span>dBFS</span></div>
           </aside>
           </div>
+          <aside class="picture-panel panel" id="live-picture" aria-labelledby="picture-title" hidden>
+            <header class="picture-banner">
+              <img src="/assets/live-picture-innsmouth.webp" width="960" height="541" alt="" loading="lazy" decoding="async">
+              <h2 id="picture-title" data-en="Picture">Imagen</h2>
+            </header>
+            <div class="picture-body">
+              <fieldset class="picture-modes">
+                <legend data-en="Picture mode">Modo de imagen</legend>
+                <div class="studio-switch">
+                  <button type="button" data-picture-mode="standard" aria-pressed="true" data-en="Standard">Estándar</button>
+                  <button type="button" data-picture-mode="movie" aria-pressed="false" data-en="Movie">Película</button>
+                  <button type="button" data-picture-mode="filmmaker" aria-pressed="false" data-en="Filmmaker">Cine Filmmaker</button>
+                  <button type="button" data-picture-mode="vivid" aria-pressed="false" data-en="Vivid">Vívido</button>
+                  <button type="button" data-picture-mode="personal" aria-pressed="false" data-en="Personal">Personal</button>
+                </div>
+              </fieldset>
+              <p class="picture-description" id="picture-description"></p>
+              <fieldset class="picture-sliders" aria-describedby="picture-description" disabled>
+                <legend class="visually-hidden" data-en="Picture settings">Ajustes de imagen</legend>
+                <label><span data-en="Brightness">Brillo</span><output aria-hidden="true">50</output><input type="range" min="0" max="100" value="50"></label>
+                <label><span data-en="Contrast">Contraste</span><output aria-hidden="true">52</output><input type="range" min="0" max="100" value="52"></label>
+                <label><span data-en="Sharpness">Nitidez</span><output aria-hidden="true">10</output><input type="range" min="0" max="100" value="10"></label>
+                <label><span data-en="Color">Color</span><output aria-hidden="true">53</output><input type="range" min="0" max="100" value="53"></label>
+              </fieldset>
+              <button type="button" class="button primary picture-save" data-en="Save my settings" hidden>Guardar mi ajuste</button>
+              <p class="picture-feedback" role="status"></p>
+            </div>
+          </aside>
         </div>
         <aside class="quick panel favorite-strip" id="favorites" aria-labelledby="favorites-title">
           <div class="section-head">
@@ -356,8 +437,8 @@
       <section id="sintonizador" class="tuner-view" aria-labelledby="tuner-title" hidden>
         <div class="intro"><p class="eyebrow">CONFIGURACIÓN DE ANTENA</p><h1 id="tuner-title">Sintonizador</h1></div>
         <div class="tuner panel">
-        <div class="tuner-summary"><div class="tuner-icon"><svg aria-hidden="true"><use href="#i-signal"/></svg></div><div>
-          <h2>AVerMedia A835</h2>
+        <div class="tuner-summary"><div class="tuner-icon"><svg aria-hidden="true"><use href="#i-tuner"/></svg></div><div>
+          <h2 id="device-title">Sintonizador TDT</h2>
           <p id="device-message" role="status">Comprobando la conexión USB…</p>
         </div></div>
         <form id="scan-form">
@@ -386,6 +467,18 @@
           </div>
         </form>
         </div>
+        <section id="tuner-hdmi" class="tuner panel" aria-labelledby="tuner-hdmi-title" hidden>
+          <div class="tuner-summary">
+            <span class="tuner-icon"><svg aria-hidden="true"><use href="#i-hdmi"/></svg></span>
+            <div>
+              <h2 id="tuner-hdmi-title" data-en="External HDMI receiver">Receptor HDMI externo</h2>
+              <p data-en="Scan and change channels with the receiver’s remote. Use an HDMI to USB capture device to watch on your computer.">Sintoniza y cambia de canal con el mando del receptor. Usa una capturadora HDMI a USB para verlo en el ordenador.</p>
+            </div>
+          </div>
+          <button type="button" class="button secondary" aria-haspopup="dialog" aria-controls="hdmi-dialog" data-hdmi-open>
+            <svg aria-hidden="true"><use href="#i-hdmi"/></svg><span data-en="Open HDMI input">Abrir entrada HDMI</span>
+          </button>
+        </section>
         <section class="tuning-profiles panel" aria-labelledby="tuning-profiles-title">
           <div>
             <h2 id="tuning-profiles-title" tabindex="-1">Sintonizaciones guardadas</h2>
@@ -409,6 +502,200 @@
             <button class="button secondary tuning-delete" value="delete">Eliminar</button>
           </form>
         </dialog>
+      </section>
+      <section id="teletexto" aria-labelledby="teletext-title" hidden>
+        <header class="tt-header">
+          <div><p class="tt-kicker"><svg aria-hidden="true"><use href="#i-tuner"/></svg><span data-en="Over the air">Por antena</span></p>
+          <h1 id="teletext-title" tabindex="-1" data-en="Teletext">Teletexto</h1></div>
+          <div class="tt-source broadcast-channel-picker" id="tt-picker">
+            <span id="tt-channel-label" data-en="Channel">Canal</span>
+            <button id="tt-channel" type="button" class="button secondary broadcast-channel-trigger"
+                    aria-controls="tt-channel-options" aria-expanded="false" aria-labelledby="tt-channel-label tt-channel-name">
+              <svg aria-hidden="true"><use href="#i-live"/></svg>
+              <span id="tt-channel-name" class="broadcast-channel-name" data-en="Choose a channel">Elige un canal</span>
+              <svg class="choice-chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+            </button>
+            <div id="tt-channel-options" class="choice-panel broadcast-channel-options" hidden></div>
+          </div>
+        </header>
+        <div class="tt-toolbar">
+          <button type="button" class="button secondary tt-index" id="tt-index" aria-current="page">
+            <svg aria-hidden="true"><use href="#i-grid"/></svg><span data-en="Index">Índice</span><b>100</b>
+          </button>
+          <form class="tt-jump" id="tt-jump">
+            <label for="tt-page-input" data-en="Go to page">Ir a página</label>
+            <input id="tt-page-input" type="text" inputmode="numeric" autocomplete="off" pattern="[1-8][0-9]{2}" maxlength="3" placeholder="100" required>
+            <button type="submit" class="button secondary" aria-label="Abrir página"><svg aria-hidden="true"><use href="#i-signal-back"/></svg></button>
+          </form>
+        </div>
+        <div class="tt-status panel" id="tt-status" role="status" hidden>
+          <svg aria-hidden="true"><use href="#i-teletext"/></svg>
+          <div><strong id="tt-status-title"></strong><p id="tt-status-detail"></p></div>
+          <a id="tt-scan-link" class="button secondary" href="#sintonizador" data-en="Open tuner" hidden>Abrir sintonizador</a>
+        </div>
+        <div class="tt-home" id="tt-home" aria-label="Índice del teletexto" hidden>
+          <button class="tt-hero" type="button" id="tt-feature">
+            <span class="tt-hero-art" aria-hidden="true"><span class="tt-sun"></span><span class="tt-wave"></span><span class="tt-pixels"></span></span>
+            <span class="tt-hero-copy">
+              <span class="tt-ref"><span id="tt-feature-number"></span><span class="tt-feature-category" id="tt-feature-category"></span></span>
+              <strong id="tt-feature-title"></strong><span class="tt-deck" id="tt-feature-copy"></span>
+              <span class="tt-open"><span data-en="Open page">Abrir página</span><svg aria-hidden="true"><use href="#i-chevron"/></svg></span>
+            </span>
+          </button>
+          <div class="tt-pages" id="tt-pages"></div>
+          <details class="tt-directory" id="tt-directory" hidden>
+            <summary data-en="Received pages">Páginas recibidas</summary><div id="tt-directory-pages"></div>
+          </details>
+        </div>
+        <article class="tt-reader panel" id="tt-reader" aria-labelledby="tt-title" hidden>
+          <header class="tt-reader-header">
+            <div><p class="tt-reader-tag"><span id="tt-number"></span><span id="tt-section"></span></p><h2 id="tt-title" tabindex="-1"></h2></div>
+            <div class="tt-mode" role="group" aria-label="Modo de lectura">
+              <button type="button" class="button secondary" data-tt-mode="reading" aria-pressed="true" data-en="Reading">Lectura</button>
+              <button type="button" class="button secondary" data-tt-mode="original" aria-pressed="false" data-en="Original view">Vista original</button>
+            </div>
+          </header>
+          <div id="tt-reading" class="tt-reading"></div>
+          <div id="tt-original" class="tt-original" hidden>
+            <div class="tt-crt" id="tt-crt"></div>
+          </div>
+          <footer class="tt-reader-nav">
+            <button type="button" class="button secondary" id="tt-previous"><svg aria-hidden="true"><use href="#i-signal-back"/></svg><span data-en="Previous page">Página anterior</span></button>
+            <div class="tt-subpages" id="tt-subpages" hidden><label for="tt-subpage" data-en="Subpage">Subpágina</label><select id="tt-subpage"></select></div>
+            <button type="button" class="button secondary" id="tt-next"><span data-en="Next page">Página siguiente</span><svg aria-hidden="true"><use href="#i-chevron"/></svg></button>
+          </footer>
+        </article>
+      </section>
+      <section id="analisis" aria-labelledby="signal-title" hidden>
+        <div class="intro"><p class="eyebrow">INVISIBLE TV</p><h1 id="signal-title" tabindex="-1" data-en="Signal analysis">Análisis de señal</h1></div>
+        <dl class="signal-summary panel">
+          <div><dt data-en="Frequency">Frecuencia</dt><dd id="signal-frequency">—</dd></div>
+          <div><dt data-en="Multiplex">Múltiplex</dt><dd id="signal-multiplex">—</dd></div>
+          <div><dt data-en="Channels on this frequency">Canales en esta frecuencia</dt><dd id="signal-service-count">—</dd></div>
+          <div><dt data-en="Received bitrate">Caudal recibido</dt><dd id="signal-rate">—</dd></div>
+        </dl>
+        <nav class="signal-modes" aria-label="Vistas del análisis">
+          <button type="button" class="button secondary" data-signal-view="universe" aria-pressed="true" data-en="Universe">Universo</button>
+          <button type="button" class="button secondary" data-signal-view="flows" aria-pressed="false" data-en="Data flows">Flujos</button>
+          <button type="button" class="button secondary" data-signal-view="timeline" aria-pressed="false" data-en="Timeline">Cronología</button>
+        </nav>
+        <aside class="signal-guide panel" aria-labelledby="signal-guide-title">
+          <header class="signal-guide-head">
+            <span class="signal-guide-icon"><svg aria-hidden="true"><use href="#i-signal-book"/></svg></span>
+            <h2 id="signal-guide-title" data-en="How to read this screen">Cómo leer esta pantalla</h2>
+          </header>
+          <div class="signal-guide-context" data-signal-guide="universe">
+            <div class="signal-guide-tile" data-kind="planet">
+              <span class="signal-guide-figure" aria-hidden="true"><svg><use href="#i-signal-planet"/></svg></span>
+              <div><strong data-en="Planet · frequency">Planeta · frecuencia</strong><p data-en="Select a planet to explore the channels it carries.">Pulsa un planeta para explorar los canales de esa frecuencia.</p></div>
+            </div>
+            <div class="signal-guide-tile" data-kind="channel">
+              <span class="signal-guide-figure" aria-hidden="true"><svg><use href="#i-signal-satellite"/></svg></span>
+              <div><strong data-en="Satellite · channel">Satélite · canal</strong><p data-en="Select a satellite to tune to that channel.">Pulsa un satélite para sintonizar su canal.</p></div>
+            </div>
+            <div class="signal-guide-tile" data-kind="reception">
+              <span class="signal-guide-figure" aria-hidden="true"><svg><use href="#i-signal-pulse"/></svg></span>
+              <div><strong data-en="Pulse · live reception">Pulso · recepción activa</strong><p data-en="The light travels from the tuned frequency to your antenna.">La luz va de la frecuencia sintonizada a tu antena.</p></div>
+            </div>
+          </div>
+          <div class="signal-guide-context signal-guide-context--wide" data-signal-guide="flows" hidden>
+            <div class="signal-guide-tile" data-kind="channel">
+              <span class="signal-guide-figure" aria-hidden="true"><svg><use href="#i-signal-flows"/></svg></span>
+              <div><strong data-en="How the data is shared">Cómo se reparten los datos</strong><p data-en="Each colour is a type of data. Mb/s tells you how much arrives every second, and the percentage tells you its share of the tuned frequency.">Cada color es un tipo de dato. Los Mb/s indican cuánto llega por segundo. El porcentaje indica qué parte ocupa en la frecuencia sintonizada.</p></div>
+            </div>
+          </div>
+          <div class="signal-guide-context signal-guide-context--wide" data-signal-guide="timeline" hidden>
+            <div class="signal-guide-tile" data-kind="reception">
+              <span class="signal-guide-figure" aria-hidden="true"><svg><use href="#i-history"/></svg></span>
+              <div><strong data-en="What changed in the last minute">Qué ha cambiado en el último minuto</strong><p data-en="Read from top to bottom to see when a channel was tuned or when its streams changed.">Lee de arriba abajo para saber cuándo se sintonizó un canal o cambiaron sus pistas.</p></div>
+            </div>
+          </div>
+          <details class="signal-glossary">
+            <summary><span data-en="Signal and channel glossary">Glosario de señal y canal</span><svg aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+            <dl>
+              <div><dt data-en="Multiplex · UHF · MHz">Múltiplex · UHF · MHz</dt><dd data-en="A multiplex is a bundle of channels sent together. UHF is the broadcast channel number, and MHz is the frequency your tuner receives.">Un múltiplex es un grupo de canales que se emiten juntos. UHF es el número del canal de emisión y los MHz indican la frecuencia que recibe el sintonizador.</dd></div>
+              <div><dt data-en="Network · TSID">Red · TSID</dt><dd data-en="The network groups broadcasts. The TSID is the number used to identify this multiplex.">La red agrupa emisiones. El TSID es el número que identifica este múltiplex.</dd></div>
+              <div><dt data-en="Signal quality · errors">Calidad de señal · errores</dt><dd data-en="More dB means the broadcast stands out more from the noise. Packet errors count fragments marked as damaged.">Cuantos más dB, más destaca la emisión sobre el ruido. Los errores cuentan los fragmentos que llegan marcados como dañados.</dd></div>
+              <div><dt data-en="Streams · PID · codec">Pistas · PID · códec</dt><dd data-en="A channel has separate streams for picture, sound and other data. The PID identifies a stream, and the codec describes how it is encoded.">Un canal contiene pistas de imagen, sonido y otros datos. El PID identifica cada pista y el códec indica cómo está codificada.</dd></div>
+            </dl>
+          </details>
+        </aside>
+        <div class="signal-stage panel">
+          <section data-signal-panel="universe">
+            <div class="signal-head">
+              <div><h2 data-en="Channel universe">Universo de canales</h2><p id="signal-map-count"></p></div>
+              <div class="signal-controls">
+                <div id="signal-picker" class="broadcast-channel-picker">
+                  <button id="signal-channel-picker" type="button" class="button secondary broadcast-channel-trigger" aria-controls="signal-channel-options" aria-expanded="false" aria-labelledby="signal-picker-label signal-picker-name">
+                    <svg aria-hidden="true"><use href="#i-live"/></svg>
+                    <span id="signal-picker-label" class="signal-visually-hidden" data-en="Choose a channel">Elegir un canal</span>
+                    <span id="signal-picker-name" class="broadcast-channel-name"></span>
+                    <svg class="choice-chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+                  </button>
+                  <div id="signal-channel-options" class="choice-panel broadcast-channel-options" hidden></div>
+                </div>
+              </div>
+            </div>
+            <p id="signal-feedback" class="signal-feedback" role="status" hidden></p>
+            <div class="signal-world">
+              <button type="button" id="signal-overview" class="button signal-overview" aria-keyshortcuts="Escape" hidden>
+                <svg aria-hidden="true"><use href="#i-signal-back"/></svg><span data-en="Back to the universe">Volver al universo</span>
+              </button>
+              <svg class="signal-links" aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+              <div class="signal-space" aria-hidden="true"></div>
+              <div id="signal-electric" class="signal-electric" aria-hidden="true" hidden></div>
+              <svg class="signal-fallback" aria-hidden="true">
+                <defs><g id="signal-aerial" fill="none" stroke="currentColor" stroke-linecap="round">
+                  <path d="M0 90V-24M-95 6L100 -39" stroke-width="4"/>
+                  <path d="M-82 -35l32 72m-5-78l28 67m-3-70l25 61m-2-62l22 52m2-54l18 45m6-48l14 38m9-41l11 32M-11 90h22" stroke-width="2.6"/>
+                </g></defs>
+                <use href="#signal-aerial"/>
+              </svg>
+              <div class="signal-planets" aria-label="Frecuencias encontradas"></div>
+              <div class="signal-satellites"></div>
+              <span class="signal-antenna-caption" data-en="Your antenna">Tu antena</span>
+              <span class="signal-map-caption" id="signal-map-caption" aria-live="polite"></span>
+              <div class="signal-empty" id="signal-empty" hidden><a href="#sintonizador" data-en="Scan for channels to explore their signal.">Sintoniza canales para explorar su señal.</a></div>
+            </div>
+            <div class="signal-choices" id="signal-choices" hidden></div>
+            <p class="signal-reception" id="signal-reception" role="status"></p>
+            <dl class="signal-metrics">
+              <div><dt data-en="Network · TSID">Red · TSID</dt><dd id="signal-network">—</dd></div>
+              <div><dt data-en="Carrier-to-noise ratio">Relación señal/ruido</dt><dd id="signal-cnr">—</dd></div>
+              <div><dt id="signal-errors-label" data-en="Flagged packet errors">Paquetes con error</dt><dd id="signal-errors">—</dd></div>
+            </dl>
+          </section>
+          <section data-signal-panel="flows" hidden>
+            <div class="signal-head signal-detail-head">
+              <span class="signal-detail-icon"><svg aria-hidden="true"><use href="#i-signal-flows"/></svg></span>
+              <h2 data-en="Bitrate by data type">Caudal por tipo de datos</h2><small id="signal-flow-uhf"></small>
+            </div>
+            <div class="signal-chart" id="signal-chart"></div>
+          </section>
+          <section data-signal-panel="timeline" hidden>
+            <div class="signal-head signal-detail-head">
+              <span class="signal-detail-icon"><svg aria-hidden="true"><use href="#i-history"/></svg></span>
+              <h2 data-en="Reception activity · last minute">Actividad de la recepción · último minuto</h2><small id="signal-timeline-uhf"></small>
+            </div>
+            <ol class="signal-events" id="signal-events"></ol>
+          </section>
+        </div>
+        <section class="signal-inspector panel" aria-labelledby="signal-anatomy-title">
+          <div class="signal-head signal-detail-head">
+            <span class="signal-detail-icon"><svg aria-hidden="true"><use href="#i-signal-layers"/></svg></span>
+            <h2 id="signal-anatomy-title" data-en="Channel anatomy">Anatomía del canal</h2><small id="signal-stream-count"></small>
+          </div>
+          <div class="signal-anatomy">
+            <div class="signal-service-card">
+              <p id="signal-service-meta"></p><h3 id="signal-service"></h3><strong id="signal-service-rate"></strong>
+              <div id="signal-share" class="signal-service-share" hidden>
+                <div class="signal-track-meter" aria-hidden="true"><span id="signal-share-fill"></span></div>
+                <p id="signal-service-share"></p>
+              </div>
+            </div>
+            <div class="signal-tracks" id="signal-tracks"></div>
+          </div>
+        </section>
       </section>
       <section id="grabaciones" aria-labelledby="recordings-title" hidden>
         <div class="intro"><p class="eyebrow">ARCHIVO LOCAL</p><h1 id="recordings-title">Grabaciones</h1></div>
@@ -586,9 +873,86 @@
 
       <footer>
         <div class="footer-credit"><strong>Arkham TV {{APP_VERSION}}</strong><span>© Creado por Óscar Peña, 2026 <span class="footer-changelog"><span aria-hidden="true">| </span><a href="#changelog">Changelog</a></span></span></div>
-        <span id="footer-tuner">Sintonizador DVB-T</span>
+        <span id="footer-tuner">Sintonizador TDT</span>
       </footer>
     </main>
   </div>
+  <dialog id="mobile-share" aria-labelledby="mobile-share-title" aria-describedby="mobile-share-copy">
+    <div class="mobile-share-body">
+      <form method="dialog"><button class="button secondary mobile-share-close" aria-label="Cerrar" autofocus><svg aria-hidden="true"><use href="#i-close"/></svg></button></form>
+      <div class="mobile-share-icon"><svg aria-hidden="true"><use href="#i-phone"/></svg></div>
+      <h2 id="mobile-share-title">Ver en el móvil</h2>
+      <p id="mobile-share-copy">Escanea el QR con la cámara. Conecta ambos dispositivos a la misma red Wi-Fi.</p>
+      <label id="mobile-network-field" hidden><span>Dirección de red</span><select id="mobile-network"></select></label>
+      <canvas id="mobile-qr" role="img" aria-label="Código QR para ver Arkham TV" hidden></canvas>
+      <input id="mobile-url" aria-label="Enlace para abrir en el móvil" readonly hidden>
+      <p class="mobile-share-note">Al abrir el enlace, gira el móvil para ver la TV en horizontal.</p>
+      <p id="mobile-share-feedback" role="status" hidden></p>
+      <button type="button" id="mobile-share-stop" class="button secondary" hidden>Dejar de compartir</button>
+    </div>
+  </dialog>
+
+  <dialog id="hdmi-dialog" class="hdmi-dialog" aria-labelledby="hdmi-title">
+    <div class="hdmi-dialog-head">
+      <span class="hdmi-icon"><svg aria-hidden="true"><use href="#i-hdmi"/></svg></span>
+      <h2 id="hdmi-title" tabindex="-1" data-en="HDMI input with a video capture device">Entrada HDMI con capturadora de vídeo</h2>
+      <form method="dialog"><button id="hdmi-close" class="button secondary" aria-label="Cerrar" autofocus><svg aria-hidden="true"><use href="#i-close"/></svg></button></form>
+    </div>
+    <section id="hdmi-permissions" hidden>
+      <p class="hdmi-note" id="hdmi-permission-device" hidden></p>
+      <ul class="hdmi-permission-list">
+        <li>
+          <svg aria-hidden="true"><use href="#i-hdmi"/></svg>
+          <div><strong data-en="Capture device video">Vídeo de la capturadora</strong><p data-en="Shows the picture from the receiver.">Para ver la imagen del receptor.</p></div>
+          <span id="hdmi-video-access"></span>
+        </li>
+        <li>
+          <svg aria-hidden="true"><use href="#i-volume"/></svg>
+          <div><strong data-en="Capture device audio">Audio de la capturadora</strong><p data-en="Plays the sound from the receiver.">Para escuchar la emisión.</p></div>
+          <span id="hdmi-audio-access"></span>
+        </li>
+      </ul>
+      <p id="hdmi-permission-note" class="hdmi-note"></p>
+      <div class="hdmi-actions">
+        <button class="button secondary" id="hdmi-permission-dismiss" type="button" data-en="Not now">Ahora no</button>
+        <a class="button primary" id="hdmi-helper-save" href="/guardar-auxiliar-hdmi" data-en="Save HDMI helper" hidden>Guardar auxiliar HDMI</a>
+        <button class="button primary" id="hdmi-permission-next" type="button" data-en="Continue">Continuar</button>
+      </div>
+    </section>
+    <section id="hdmi-confirm" hidden>
+      <p id="hdmi-confirm-note" class="hdmi-note"></p>
+      <div class="hdmi-actions">
+        <button class="button secondary" id="hdmi-deny" type="button" data-en="Deny">Denegar</button>
+        <button class="button primary" id="hdmi-grant" type="button" data-en="Allow">Permitir</button>
+      </div>
+    </section>
+    <form id="hdmi-form">
+      <p class="hdmi-wiring"><span data-en="Antenna">Antena</span><span aria-hidden="true">→</span><span data-en="TV receiver">Receptor TDT</span><span aria-hidden="true">→</span><span data-en="HDMI to USB capture">Capturadora HDMI a USB</span><span aria-hidden="true">→</span><span id="hdmi-computer">Mac</span></p>
+      <p class="hdmi-note" data-en="Use the receiver’s remote to scan and change channels. Choose the capture device for both video and audio.">Usa el mando del receptor para sintonizar y cambiar de canal. Elige la capturadora para el vídeo y el sonido.</p>
+      <div class="hdmi-fields">
+        <label for="hdmi-video"><span data-en="Video capture device">Capturadora de vídeo</span><select id="hdmi-video" required></select></label>
+        <label for="hdmi-audio"><span data-en="HDMI audio input">Entrada de audio HDMI</span><select id="hdmi-audio" required></select></label>
+        <label for="hdmi-deinterlace"><span data-en="Deinterlacing">Desentrelazado</span>
+          <select id="hdmi-deinterlace">
+            <option value="auto" data-en="Automatic (25/30 fps)">Automático (25/30 fps)</option>
+            <option value="on" data-en="On">Activado</option>
+            <option value="off" data-en="Off">Desactivado</option>
+          </select>
+        </label>
+        <label for="hdmi-gain"><span data-en="HDMI audio gain">Ganancia de audio HDMI</span>
+          <select id="hdmi-gain">
+            <option value="0">0 dB</option><option value="6">+6 dB</option>
+            <option value="12">+12 dB</option><option value="18">+18 dB</option>
+          </select>
+        </label>
+      </div>
+      <div class="hdmi-actions">
+        <a class="button secondary" id="hdmi-macos-permission" href="/autorizar-captura-hdmi" data-en="Camera and microphone access">Permisos de cámara y micrófono</a>
+        <button class="button secondary" id="hdmi-refresh" type="button" data-en="Refresh">Actualizar</button>
+        <button class="button primary" id="hdmi-start" type="submit" data-en="Watch HDMI" disabled>Ver HDMI</button>
+      </div>
+    </form>
+    <p class="hdmi-feedback" id="hdmi-feedback" role="status" hidden></p>
+  </dialog>
 </body>
 </html>

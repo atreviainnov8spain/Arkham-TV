@@ -1,4 +1,36 @@
 {
+  "1.10": [
+    "TV from an HDMI receiver",
+    "On macOS and Linux (ARM64 and 64-bit Intel/AMD), connect an Edision nano T265+ or another terrestrial TV receiver with HDMI output through a compatible USB capture device.",
+    "On Linux, confirm video and audio access from HDMI input. The Snap requires the camera and audio recording connections.",
+    "Open HDMI input in Live, choose the capture device’s video and audio, and scan or change channels using the receiver’s remote.",
+    "Record the HDMI input at up to 1080p with stereo sound or share it with your phone. The USB tuner still provides its own over-the-air features.",
+    "On macOS and Linux, Live adds picture modes and a personal setting for brightness, contrast, sharpness, and color."
+  ],
+  "1.9": [
+    "Invisible TV · Signal analysis and Teletext",
+    "On macOS and Linux, explore the frequencies found during tuning as 3D planets. Zoom in to see their channels. A brighter marker identifies the live channel.",
+    "Select a channel to see real reception measurements and its video, audio, subtitle and teletext streams.",
+    "Data flows and Timeline show where the bitrate goes and what has changed in the broadcast.",
+    "The illustrated guide follows each tab, the channel picker groups channels by UHF, and the sidebar can be collapsed. Back to the universe restores the full map.",
+    "The active connection has round iridescent pulses. Data flows shows each type's share of the bitrate, and Channel anatomy groups the channel's streams.",
+    "Teletext on macOS and Linux adds a visual index for pages received over the air, with page numbers, a reading view and the original grid.",
+    "La 1 HD teletext loads automatically when the index arrives. The channel picker uses the same design and frequency groups as Signal analysis.",
+    "Teletext reading preserves broadcast accents, separates index columns and distinguishes page links from numbers in the text.",
+    "The expanded sidebar shows the green symbol and the Arkham TV name. The collapsed sidebar shows the symbol on its own."
+  ],
+  "1.8.24": [
+    "Watch live TV on your phone",
+    "Open Watch on your phone and scan the QR code with an iPhone or Android device on the same Wi-Fi network.",
+    "Rotate your phone to expand the player. Use the full-screen button to reduce it or open the TV Guide to change the shared channel.",
+    "End mobile sharing from your computer. Channel changes from the phone are disabled during recording."
+  ],
+  "1.8.23": [
+    "More DVB-T and DVB-T2 tuners on Ubuntu",
+    "Arkham TV detects DVB-T and DVB-T2 tuners that Ubuntu recognises. The AVerMedia A835 and A835B continue to support DVB-T.",
+    "The scan checks which standards the tuner supports. On a tuner that supports both, it tries DVB-T2 if there is no DVB-T signal on that frequency.",
+    "On Linux, the volume percentage is centred and stays the same width as the value changes."
+  ],
   "1.8.22": [
     "More reliable 4K recording",
     "Recordings can ride out brief encoder stalls without cutting out at startup or interrupting live playback.",

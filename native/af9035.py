@@ -6,6 +6,7 @@ import argparse
 from contextlib import contextmanager
 import hashlib
 import json
+import math
 import os
 import ctypes as c
 from pathlib import Path
@@ -278,6 +279,24 @@ class USB:
     def transport(self):
         return self.read(TS_FRAME, transport=True, timeout=600)
 
+    def carrier_to_noise(self):
+        # Conversion from the AF9033 driver, af9033_read_status (Linux, GPL-2.0-or-later).
+        raw = int.from_bytes(self.registers(0x80002C, 3), "little")
+        superframes = self.register(0x80F78B)
+        mode = self.register(0x80F900) & 3
+        modulation = self.register(0x80F903) & 3
+        if not raw or mode > 2 or modulation > 2:
+            return None
+        value = raw // max(1, superframes) * (4, 1, 2)[mode]
+        if modulation == 0:
+            value = min(1689999, max(653799, value))
+            return 13 * math.log10(value / (1690000 - value)) + 2.6
+        if modulation == 1:
+            value = min(827999, max(371105, value))
+            return 6 * math.log10((value - 370000) / (828000 - value)) + 15.7
+        value = min(424999, max(193246, value))
+        return 8 * math.log10((value - 193000) / (425000 - value)) + 23.8
+
 
 def frequency_for(channel):
     return 474_000_000 + (channel - 21) * 8_000_000
@@ -381,6 +400,7 @@ def main():
                 print("RF LOCKED", file=sys.stderr, flush=True)
                 locked = True
                 next_check = time.monotonic() + 1
+                previous_cnr = None
                 while True:
                     sys.stdout.buffer.write(usb.transport())
                     sys.stdout.buffer.flush()
@@ -390,6 +410,16 @@ def main():
                         if signal_locked != locked:
                             print("RF LOCKED" if signal_locked else "RF LOST", file=sys.stderr, flush=True)
                             locked = signal_locked
+                            previous_cnr = None
+                        if signal_locked:
+                            try:
+                                sample_cnr = usb.carrier_to_noise()
+                            except USBError:
+                                sample_cnr = None
+                            cnr = "UNAVAILABLE" if sample_cnr is None else f"{sample_cnr:.1f}"
+                            if cnr != previous_cnr:
+                                print(f"RF CNR {cnr}", file=sys.stderr, flush=True)
+                                previous_cnr = cnr
                         next_check = now + 1
     except BrokenPipeError:
         sys.stdout = None

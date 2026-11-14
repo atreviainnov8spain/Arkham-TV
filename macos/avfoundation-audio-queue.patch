@@ -1,0 +1,164 @@
+--- a/libavdevice/avfoundation.m
++++ b/libavdevice/avfoundation.m
+@@ -82,12 +82,13 @@
+     { AV_PIX_FMT_NONE, 0 }
+ };
+ 
++#define AVF_AUDIO_QUEUE_SIZE 128
++
+ typedef struct
+ {
+     AVClass*        class;
+ 
+     int             frames_captured;
+-    int             audio_frames_captured;
+     pthread_mutex_t frame_lock;
+     id              avf_delegate;
+     id              avf_audio_delegate;
+@@ -131,7 +132,8 @@
+     AVCaptureVideoDataOutput *video_output;
+     AVCaptureAudioDataOutput *audio_output;
+     CMSampleBufferRef         current_frame;
+-    CMSampleBufferRef         current_audio_frame;
++    CMSampleBufferRef         audio_frames[AVF_AUDIO_QUEUE_SIZE];
++    unsigned                  audio_head, audio_count;
+ 
+     AVCaptureDevice          *observed_device;
+ #if !TARGET_OS_IPHONE && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1070
+@@ -150,6 +152,14 @@
+     pthread_mutex_unlock(&ctx->frame_lock);
+ }
+ 
++/* The caller holds frame_lock. */
++static void pop_audio_frame(AVFContext *ctx)
++{
++    CFRelease(ctx->audio_frames[ctx->audio_head]);
++    ctx->audio_head = (ctx->audio_head + 1) % AVF_AUDIO_QUEUE_SIZE;
++    --ctx->audio_count;
++}
++
+ /** FrameReceiver class - delegate for AVCaptureSession
+  */
+ @interface AVFFrameReceiver : NSObject
+@@ -273,15 +283,18 @@
+ {
+     lock_frames(_context);
+ 
+-    if (_context->current_audio_frame != nil) {
+-        CFRelease(_context->current_audio_frame);
++    /* Audio buffers contain consecutive samples. A newer buffer cannot replace
++     * an unread buffer without making a hole in the recorded waveform. */
++    if (_context->audio_count == AVF_AUDIO_QUEUE_SIZE) {
++        av_log(_context, AV_LOG_WARNING, "AVFoundation audio queue overrun\n");
++        pop_audio_frame(_context);
+     }
+ 
+-    _context->current_audio_frame = (CMSampleBufferRef)CFRetain(audioFrame);
++    unsigned tail = (_context->audio_head + _context->audio_count) % AVF_AUDIO_QUEUE_SIZE;
++    _context->audio_frames[tail] = (CMSampleBufferRef)CFRetain(audioFrame);
++    ++_context->audio_count;
+ 
+     unlock_frames(_context);
+-
+-    ++_context->audio_frames_captured;
+ }
+ 
+ @end
+@@ -305,6 +318,10 @@
+     av_freep(&ctx->url);
+     av_freep(&ctx->audio_buffer);
+ 
++    lock_frames(ctx);
++    while (ctx->audio_count)
++        pop_audio_frame(ctx);
++    unlock_frames(ctx);
+     pthread_mutex_destroy(&ctx->frame_lock);
+ 
+     if (ctx->current_frame) {
+@@ -685,17 +702,19 @@
+     }
+ 
+     // Take stream info from the first frame.
+-    while (ctx->audio_frames_captured < 1) {
++    lock_frames(ctx);
++    while (!ctx->audio_count) {
++        unlock_frames(ctx);
+         CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.1, YES);
++        lock_frames(ctx);
+     }
++    CMSampleBufferRef audio_frame = ctx->audio_frames[ctx->audio_head];
+ 
+-    lock_frames(ctx);
+-
+     ctx->audio_stream_index = stream->index;
+ 
+     avpriv_set_pts_info(stream, 64, 1, avf_time_base);
+ 
+-    format_desc = CMSampleBufferGetFormatDescription(ctx->current_audio_frame);
++    format_desc = CMSampleBufferGetFormatDescription(audio_frame);
+     const AudioStreamBasicDescription *basic_desc = CMAudioFormatDescriptionGetStreamBasicDescription(format_desc);
+ 
+     if (!basic_desc) {
+@@ -743,7 +762,7 @@
+     }
+ 
+     if (ctx->audio_non_interleaved) {
+-        CMBlockBufferRef block_buffer = CMSampleBufferGetDataBuffer(ctx->current_audio_frame);
++        CMBlockBufferRef block_buffer = CMSampleBufferGetDataBuffer(audio_frame);
+         ctx->audio_buffer_size        = CMBlockBufferGetDataLength(block_buffer);
+         ctx->audio_buffer             = av_malloc(ctx->audio_buffer_size);
+         if (!ctx->audio_buffer) {
+@@ -753,9 +772,6 @@
+         }
+     }
+ 
+-    CFRelease(ctx->current_audio_frame);
+-    ctx->current_audio_frame = nil;
+-
+     unlock_frames(ctx);
+ 
+     return 0;
+@@ -1125,7 +1141,10 @@
+         CMBlockBufferRef block_buffer;
+         lock_frames(ctx);
+ 
+-        if (ctx->current_frame != nil) {
++        CMSampleBufferRef audio_frame = ctx->audio_count ? ctx->audio_frames[ctx->audio_head] : nil;
++        if (ctx->current_frame != nil &&
++            (audio_frame == nil || CMTimeCompare(CMSampleBufferGetPresentationTimeStamp(ctx->current_frame),
++                                                CMSampleBufferGetPresentationTimeStamp(audio_frame)) <= 0)) {
+             int status;
+             int length = 0;
+ 
+@@ -1173,9 +1192,9 @@
+                 unlock_frames(ctx);
+                 return status;
+             }
+-        } else if (ctx->current_audio_frame != nil) {
+-            CMBlockBufferRef block_buffer = CMSampleBufferGetDataBuffer(ctx->current_audio_frame);
+-            int block_buffer_size         = CMBlockBufferGetDataLength(block_buffer);
++        } else if (audio_frame != nil) {
++            CMBlockBufferRef block_buffer = CMSampleBufferGetDataBuffer(audio_frame);
++            int block_buffer_size         = block_buffer ? CMBlockBufferGetDataLength(block_buffer) : 0;
+ 
+             if (!block_buffer || !block_buffer_size) {
+                 unlock_frames(ctx);
+@@ -1195,7 +1214,7 @@
+             CMItemCount count;
+             CMSampleTimingInfo timing_info;
+ 
+-            if (CMSampleBufferGetOutputSampleTimingInfoArray(ctx->current_audio_frame, 1, &timing_info, &count) == noErr) {
++            if (CMSampleBufferGetOutputSampleTimingInfoArray(audio_frame, 1, &timing_info, &count) == noErr) {
+                 AVRational timebase_q = av_make_q(1, timing_info.presentationTimeStamp.timescale);
+                 pkt->pts = pkt->dts = av_rescale_q(timing_info.presentationTimeStamp.value, timebase_q, avf_time_base_q);
+             }
+@@ -1249,8 +1268,7 @@
+                 }
+             }
+ 
+-            CFRelease(ctx->current_audio_frame);
+-            ctx->current_audio_frame = nil;
++            pop_audio_frame(ctx);
+         } else {
+             pkt->data = NULL;
+             unlock_frames(ctx);

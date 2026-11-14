@@ -26,9 +26,11 @@ from native.channels import clean_channel_name
 from native.changelog import load_changelog, render_changelog
 from native.devices import USB_MODELS
 from native.guide import Guide
-from native import movies
+from native import hdmi, movies
 from native.recordings import RecordingError, Recordings, RECORDING_QUALITIES
 from native.audio_tracks import match_track, primary_track
+from native.mobile import MobileSession
+from native.signal_analysis import SignalAnalysis
 from native.transport import Transport
 
 ROOT = Path(__file__).resolve().parent
@@ -52,6 +54,8 @@ VIDEO_ENCODER = (
 SCAN_LINE = re.compile(r"(?m)^UHF (\d+)$")
 SCAN_COUNT_LINE = re.compile(r"(?m)^CHANNELS_FOUND (\d+)\n")
 RF_LINE = re.compile(r"(?m)^RF (LOCKED|LOST)$")
+RF_CNR = re.compile(r"(?m)^RF CNR (-?\d+(?:\.\d+)?)$")
+SIGNAL_ANALYSIS = platform.system() in {"Darwin", "Linux"}
 MEDIA_PATH = re.compile(r"/tv/([0-9a-f]{16})/(live\.m3u8|init\.mp4|segment-\d+\.m4s)")
 
 
@@ -86,10 +90,10 @@ def probe():
 
         return linux_probe()
     if platform.system() != "Darwin":
-        return {"usb": None, "ready": False, "message": "Arkham TV requiere macOS o Linux."}
+        return {"usb": None, "connected": None, "ready": False, "message": "Arkham TV requiere macOS o Linux."}
     device = mac_usb()
     if not device:
-        message = "Conecta el AVerMedia A835 a un puerto USB del Mac."
+        message = "Conecta un sintonizador de TV compatible al Mac."
     elif device != "07ca:a835":
         message = f"{USB_MODELS[device]} detectado por USB. Esta variante se puede sintonizar en Ubuntu."
     elif not FIRMWARE.is_file():
@@ -97,7 +101,7 @@ def probe():
     elif missing := [name for name in TOOLS if not shutil.which(name)]:
         message = "A835 detectado. Faltan herramientas · " + ", ".join(missing)
     else:
-        return {"usb": device, "ready": True, "message": "A835 conectado por USB"}
+        return {"usb": device, "systems": ["DVB-T"], "ready": True, "message": "A835 conectado por USB"}
     return {"usb": device, "ready": False, "message": message}
 
 
@@ -195,15 +199,17 @@ class TV:
         video_folder = Path.home() / ("Movies" if platform.system() == "Darwin" else "Videos")
         self.recordings = Recordings(data, video_folder / "Arkham TV")
         self.stream_error = None
+        self.hdmi_permissions = set()
         self.autoplay_pending = False
         self.autoplay_channels = None
+        self.mobile = MobileSession(self, WEB, CONTENT_TYPES, TunerError)
 
     def status(self):
         hardware = probe()
-        hardware["model"] = USB_MODELS.get(hardware.get("usb"))
+        hardware.setdefault("model", USB_MODELS.get(hardware.get("usb")))
         with self.lock:
             self.read_signal()
-            if not hardware.get("usb"):
+            if not hardware.get("connected", hardware.get("usb")):
                 self.rf_signal = None
             hardware["signal"] = self.rf_signal
             scan = dict(self.scan)
@@ -230,13 +236,17 @@ class TV:
                     "ready": self.stream["playlist"].is_file(),
                     "audioPid": self.stream["audioPid"],
                 }
+                if source := self.stream.get("hdmi"):
+                    stream["hdmi"] = {"id": source[0]["id"], "name": source[0]["name"], "audio": source[1]["id"],
+                                      "deinterlace": source[0].get("deinterlace", "auto"), "gain": source[1].get("gain", 0)}
             now = int(time.time())
             programs = self.guide.schedule((stream["channel"],), now, now + 1)[stream["channel"]] if stream else []
             program = max(programs, key=lambda item: item["start"], default=None)
             return {"app": "Arkham TV", "hardware": hardware, "scan": scan, "stream": stream,
+                    "hdmiAvailable": hdmi.available(), "hdmiPermissionFlow": hdmi.linux_enabled(),
                     "program": program, "moviesConfigured": bool(self.movie_key),
                     "streamError": self.stream_error,
-                    "autoplayPending": self.autoplay_pending,
+                    "autoplayPending": self.autoplay_pending, "mobileSharing": bool(self.mobile.status()["url"]),
                     "audioDelays": dict(self.audio_delays),
                     "equalizer": self.equalizer,
                     "channels": list(self.channels.values()),
@@ -300,6 +310,57 @@ class TV:
             return stream["levels"].near(position)
         return []
 
+    def signal_analysis(self):
+        with self.lock:
+            capture, stream = self.capture, self.stream
+            if not capture or not stream or not capture.analysis or capture.process.poll() is not None:
+                return {}
+            self.read_signal()
+            channel = self.channels.get(stream["channel"])
+            if not channel:
+                return {}
+            result = {"channel": stream["channel"], "stream": stream["id"], "locked": self.rf_signal}
+            if self.rf_signal is not False:
+                result.update(capture.analysis.snapshot(channel["sid"]))
+            if self.rf_signal:
+                last_cnr = None
+                for line in tail(capture.log).splitlines():
+                    if line in {"RF LOST", "RF LOCKED", "RF CNR UNAVAILABLE"}:
+                        last_cnr = None
+                    elif match := RF_CNR.fullmatch(line):
+                        last_cnr = float(match[1])
+                result["cnr"] = last_cnr
+            return result
+
+    def tune_for_analysis(self, channel_id):
+        with self.lock:
+            if self.stream and self.stream["channel"] == channel_id:
+                return
+            if self.recording:
+                raise TunerError("Espera a que termine la grabación para cambiar de canal en Análisis de señal.")
+            self.start_stream(channel_id)
+
+    def teletext(self, number, subpage, revision):
+        with self.lock:
+            if not self.stream or not self.capture or self.capture.process.poll() is not None:
+                return {"state": "idle"}
+            channel = self.channels.get(self.stream["channel"])
+            if not channel or not self.capture.teletext:
+                return {"state": "idle"}
+            self.read_signal()
+            source = {"channel": channel["id"], "stream": self.stream["id"]}
+            if self.rf_signal is False:
+                return {**source, "state": "no-signal"}
+            return {**source, **self.capture.teletext.snapshot(channel["sid"], number, subpage, revision)}
+
+    def tune_for_teletext(self, channel_id):
+        with self.lock:
+            if self.stream and self.stream["channel"] == channel_id:
+                return
+            if self.recording:
+                raise TunerError("Espera a que termine la grabación para cambiar de canal en Teletexto.")
+            self.start_stream(channel_id)
+
     def require_hardware(self):
         hardware = probe()
         if not hardware["ready"]:
@@ -315,7 +376,7 @@ class TV:
             if not frequencies:
                 raise TunerError("Sintoniza tus canales antes de actualizar la guía.")
             self.require_hardware()
-            resume = self.stream["channel"] if guide and self.stream else None
+            resume = self.stream["channel"] if guide and self.stream and not self.stream.get("hdmi") else None
             self.stop_stream()
             self.stream_error = None
             folder = Path(tempfile.mkdtemp(prefix="scan-", dir=self.data))
@@ -416,7 +477,9 @@ class TV:
             signals = RF_LINE.findall(tail(job["log"]))
             self.rf_signal = "LOCKED" in signals if signals else True if channels else None
             if not channels:
-                message = "Sin canales DVB-T. Revisa la antena o prueba otro rango UHF."
+                message = ("Sin canales DVB-T ni DVB-T2. Revisa la antena o prueba otro rango UHF."
+                           if platform.system() == "Linux" else
+                           "Sin canales DVB-T. Revisa la antena o prueba otro rango UHF.")
             self.scan = {"state": "done", "kind": kind, "progress": 100, "count": len(channels), "message": message}
         except (OSError, ValueError, TunerError) as error:
             self.scan = {"state": "error", "kind": kind, "message": str(error)}
@@ -432,21 +495,63 @@ class TV:
             if not self.stream or self.stream["channel"] != channel_id:
                 raise TunerError("La emisión ha cambiado. Vuelve a elegir el audio.")
             self.collect_audio_tracks()
-            track = next((track for track in self.channels[channel_id].get("audioTracks", [])
+            track = next((track for track in self.channels.get(channel_id, {}).get("audioTracks", [])
                           if track["pid"] == pid), None)
             if not track:
                 raise TunerError("Esa pista de audio ya no está disponible.")
             if self.stream["audioPid"] != pid:
                 self.start_stream(channel_id, selected_audio=track)
 
-    def start_stream(self, channel_id, *, automatic=False, selected_audio=None):
+    def start_hdmi(self, video_id, audio_id, deinterlace, gain):
+        linux = hdmi.linux_enabled()
+        if linux:
+            from native.hdmi_linux import missing_interfaces
+
+            if (missing_interfaces() if os.environ.get("SNAP") else not {"video", "audio"} <= self.hdmi_permissions):
+                raise TunerError("Autoriza el vídeo y el audio de la capturadora HDMI.")
+        try:
+            inputs = hdmi.devices()
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
+            raise TunerError("No se pudieron consultar las entradas de captura HDMI." if linux
+                             else "No se pudieron consultar las capturadoras de macOS.") from error
+        if not linux and not inputs.get("authorized"):
+            raise TunerError("Activa Cámara y Micrófono para Arkham TV en Privacidad y seguridad de macOS.")
+        video = next((item for item in inputs["video"] if item["id"] == video_id), None)
+        audio = next((item for item in inputs["audio"] if item["id"] == audio_id), None)
+        if not video or not audio:
+            raise TunerError("Selecciona la entrada de vídeo y el audio de la capturadora HDMI.")
+        if linux:
+            from native.hdmi_linux import CaptureError, capture_mode
+
+            # Reuse the selected mode when the device is already open in this session.
+            with self.lock:
+                active_video = self.stream["hdmi"][0] if self.stream and self.stream.get("hdmi") else {}
+                try:
+                    mode = active_video["mode"] if active_video.get("id") == video_id else capture_mode(video)
+                except CaptureError as error:
+                    raise TunerError(str(error)) from error
+                self.start_stream(hdmi.CHANNEL_ID, source=({**video, "mode": mode, "deinterlace": deinterlace},
+                                                           {**audio, "gain": gain}))
+            return
+        self.start_stream(hdmi.CHANNEL_ID, source=({**video, "deinterlace": deinterlace}, {**audio, "gain": gain}))
+
+    def start_stream(self, channel_id, *, automatic=False, selected_audio=None, source=None):
         with self.lock:
             if self.job:
                 raise TunerError("Espera a que termine la búsqueda.")
-            channel = self.channels.get(channel_id)
+            if source:
+                channel = {"id": hdmi.CHANNEL_ID, "name": source[0]["name"],
+                           "sid": hdmi.PROGRAM, "uhf": 0, "frequency": 0}
+                if self.recording and (not self.stream or source != self.stream.get("hdmi")):
+                    raise TunerError("Detén la grabación antes de cambiar la entrada HDMI.")
+            else:
+                channel = self.channels.get(channel_id)
             if channel is None:
                 raise TunerError("Ese canal no está en la lista.")
-            self.require_hardware()
+            if not source:
+                self.require_hardware()
+                if self.recording and self.recording["job"]["channel"]["id"] == hdmi.CHANNEL_ID:
+                    raise TunerError("Detén la grabación antes de cambiar la entrada HDMI.")
             if self.recording and self.recording["job"].get("manual") and self.recording["job"]["channel"]["id"] != channel_id:
                 if self.recording["finishing"] is None:
                     self.end_recording()
@@ -455,20 +560,40 @@ class TV:
             if self.recording and channel["uhf"] != self.capture.uhf:
                 raise TunerError(f"Grabando en UHF {self.capture.uhf}. Elige un canal de esa frecuencia o detén la grabación.")
             reuse = bool(self.capture and self.capture.uhf == channel["uhf"] and self.capture.process.poll() is None)
+            if source and reuse:
+                reuse = bool(self.stream and source == self.stream.get("hdmi"))
             self.stop_stream(cancel_autoplay=not automatic, keep_capture=reuse)
             self.stream_error = None
-            analysis, probe_size = ("1500000", "750000") if reuse else ("3000000", "5000000")
+            if source:
+                # The Mac capture can fill a small probe with H.264 before the first AAC frame.
+                analysis, probe_size = ("500000", "32768") if hdmi.linux_enabled() else ("1500000", "2000000")
+                probe_options = ["-analyzeduration", analysis, "-probesize", probe_size, "-fpsprobesize", "0"]
+            else:
+                analysis, probe_size = ("1500000", "750000") if reuse else ("3000000", "5000000")
+                probe_options = ["-analyzeduration", analysis, "-probesize", probe_size]
             folder = Path(tempfile.mkdtemp(prefix="tv-", dir=self.data))
             playlist = folder / "live.m3u8"
             delay = self.audio_delays.get(channel_id, 0)
-            audio_filter = audio_chain(self.equalizer, delay)
-            video_filter = "bwdif=mode=send_frame:deint=interlaced,fps=25"
+            audio_filter = audio_chain(self.equalizer, delay, continuous=bool(source))
+            video_options = []
+            if source and hdmi.linux_enabled():
+                from native.hdmi_linux import output_rate
+
+                # Linux capture has already deinterlaced the image. The short
+                # MPEG-TS probe cannot always determine its frame rate.
+                video_filter = "null"
+                video_options = ["-r", str(output_rate(source[0])), "-fps_mode", "cfr"]
+            else:
+                video_filter = "bwdif=mode=send_frame:deint=interlaced"
+            if not source:
+                video_filter += ",fps=25"
             if delay < 0:
                 video_filter += f",tpad=start_mode=clone:start_duration={-delay}ms"
             encoder = None
             try:
-                capture = self.ensure_transport(channel)
-                tracks = capture.audio.wait(channel["sid"]) or []
+                capture = self.ensure_transport(channel, source=source)
+                # A new HDMI feed must start with the capture encoder's initial H.264 headers.
+                tracks = [] if source else capture.audio.wait(channel["sid"]) or []
                 preference = selected_audio or self.live_audio.get(channel_id)
                 track = (match_track(tracks, preference) if preference else None) or primary_track(tracks)
                 pid = track["pid"] if track else None
@@ -477,10 +602,11 @@ class TV:
                 with (folder / "ffmpeg.log").open("wb") as log:
                     encoder = subprocess.Popen(
                         ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "warning",
-                         "-analyzeduration", analysis, "-probesize", probe_size, "-f", "mpegts",
+                         *probe_options, "-f", "mpegts",
                          "-i", "pipe:0", "-map", f"{program}:v:0", "-map", audio_map,
                          "-vf", video_filter,
-                         *VIDEO_ENCODER, "-pix_fmt", "yuv420p", "-g", "50",
+                         *(["-force_key_frames", "expr:gte(t,n_forced*2)"] if source else []),
+                         *VIDEO_ENCODER, *video_options, "-pix_fmt", "yuv420p", "-g", "120" if source else "50",
                          "-stats_enc_pre:v", "pipe:1", "-stats_enc_pre_fmt:v", "video:{n}:{t}",
                          "-af", audio_filter, "-c:a", "aac", "-ac", "2", "-b:a", "128k",
                          "-f", "hls", "-hls_segment_type", "fmp4", "-hls_time", "2",
@@ -490,6 +616,8 @@ class TV:
                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=log, env=ENV,
                     )
                 feed = capture.attach(encoder.stdin)
+                if source and not reuse:
+                    capture.worker.start()
             except OSError:
                 terminate(encoder)
                 if encoder:
@@ -504,15 +632,23 @@ class TV:
             self.stream = {"id": secrets.token_hex(8), "channel": channel_id, "folder": folder,
                            "playlist": playlist, "started": time.monotonic(),
                            "feed": feed, "encoder": encoder, "levels": levels, "audioPid": pid}
+            if source:
+                self.stream["hdmi"] = source
+            if capture.analysis:
+                capture.analysis.select(channel["sid"])
             worker = threading.Thread(target=levels.read, args=(encoder.stdout,), daemon=True)
             self.stream["levels_worker"] = worker
             worker.start()
 
-    def ensure_transport(self, channel):
+    def ensure_transport(self, channel, *, source=None):
         if self.capture is None:
             self.rf_signal = None
-            self.capture = Transport(native_command("stream", channel["uhf"]), channel, self.guide, self.data, ROOT)
-            self.capture.worker.start()
+            command = hdmi.capture_command(*source) if source else native_command("stream", channel["uhf"])
+            self.capture = Transport(command, channel, self.guide, self.data, ROOT,
+                                     analysis=SignalAnalysis() if SIGNAL_ANALYSIS and not source else None,
+                                     teletext=SIGNAL_ANALYSIS and not source)
+            if not source:
+                self.capture.worker.start()
         return self.capture
 
     def update_channel_audio(self, tracks):
@@ -535,7 +671,10 @@ class TV:
             self.collect_audio_tracks()
             capture, self.capture = self.capture, None
             terminate(capture.process)
-            capture.worker.join(timeout=2)
+            if capture.worker.ident is not None:
+                capture.worker.join(timeout=2)
+            else:
+                capture.process.stdout.close()
 
     def read_signal(self):
         if self.capture:
@@ -552,7 +691,7 @@ class TV:
             pending.replace(self.equalizer_path)
             self.equalizer = gains
             if self.stream:
-                self.start_stream(self.stream["channel"])
+                self.start_stream(self.stream["channel"], source=self.stream.get("hdmi"))
 
     def set_audio_delay(self, channel_id, delay):
         with self.lock:
@@ -616,6 +755,11 @@ class TV:
             if manual and (not self.stream or self.stream["channel"] != channel_id):
                 raise RecordingError("La emisión ha cambiado. Vuelve a elegir qué grabar.")
             channel = self.channels.get(channel_id)
+            if manual and self.stream and (source := self.stream.get("hdmi")):
+                channel = {"id": hdmi.CHANNEL_ID, "name": source[0]["name"], "sid": hdmi.PROGRAM, "uhf": 0}
+                audio_pid = None
+                if quality > 1080:
+                    raise RecordingError("La grabación por HDMI admite hasta 1080p.")
             if not channel:
                 raise RecordingError("Elige un canal sintonizado.")
             at = now if manual else start
@@ -625,14 +769,16 @@ class TV:
             if not manual and event is None:
                 raise RecordingError("La guía ha cambiado. Vuelve a seleccionar el programa.")
             if at <= now:
-                self.require_hardware()
+                if channel_id != hdmi.CHANNEL_ID:
+                    self.require_hardware()
                 if self.recording:
                     raise RecordingError("Ya hay una grabación en curso.")
             title = event["title"] if event else channel["name"]
             end = event["end"] if event else now + 4 * 3600
             programme_start = event["start"] if event else at
             self.collect_audio_tracks()
-            track = next((track for track in self.channels[channel_id].get("audioTracks", []) if track["pid"] == audio_pid), None)
+            tracks = self.channels.get(channel_id, channel).get("audioTracks", [])
+            track = next((track for track in tracks if track["pid"] == audio_pid), None)
             if audio_pid is not None and track is None:
                 raise RecordingError("Esa pista de audio ya no está disponible.")
             job = self.recordings.schedule(channel, title, at, end, programme_start,
@@ -655,7 +801,11 @@ class TV:
 
     def start_recording(self, job):
         channel = job["channel"]
-        self.require_hardware()
+        if channel["id"] == hdmi.CHANNEL_ID:
+            if not self.stream or not self.stream.get("hdmi") or not self.capture:
+                raise RecordingError("Abre la entrada HDMI antes de grabar.")
+        else:
+            self.require_hardware()
         width, height, bitrate = RECORDING_QUALITIES.get(job.get("quality"), RECORDING_QUALITIES[1080])
         path = self.recordings.reserve(job)
         process = None
@@ -803,18 +953,25 @@ class TV:
         except FileNotFoundError:
             stale = time.monotonic() - stream["started"] > 36
         if stale or stream["feed"].failed or stream["encoder"].poll() is not None or self.capture.process.poll() is not None:
-            tuner_log = RF_LINE.sub("", tail(self.capture.log)).strip()
+            tuner_log = RF_CNR.sub("", RF_LINE.sub("", tail(self.capture.log))).replace("RF CNR UNAVAILABLE", "").strip()
             diagnostics = tuner_log + "\n" + tail(stream["folder"] / "ffmpeg.log")
             if diagnostics.strip():
                 print(diagnostics.strip()[-1600:], flush=True)
             self.stop_stream(cancel_autoplay=False)
-            self.stream_error = (tuner_log.splitlines()[-1] if tuner_log else
-                                 "La emisión se interrumpió. Revisa la antena y la conexión USB.")
+            if stream.get("hdmi"):
+                self.stream_error = ("Se interrumpió la captura HDMI. Revisa la entrada USB, el receptor y el audio en Ubuntu."
+                                     if hdmi.linux_enabled() else
+                                     "Se interrumpió la captura HDMI. Revisa la entrada USB, el receptor y los permisos de macOS.")
+            else:
+                self.stream_error = (tuner_log.splitlines()[-1] if tuner_log else
+                                     "La emisión se interrumpió. Revisa la antena y la conexión USB.")
             if self.stream_error == USB_BUSY:
                 self.autoplay_pending = False
         elif stream["playlist"].is_file():
             if stream["levels"].origin is None:
                 stream["levels"].playlist(stream["playlist"].read_bytes())
+            if stream.get("hdmi"):
+                return
             self.remember_stream_size(stream)
             if self.last_channel == stream["channel"]:
                 return
@@ -864,6 +1021,7 @@ class TV:
                 print(error, flush=True)
 
     def close(self):
+        self.mobile.stop()
         with self.lock:
             self.stop_stream()
             if self.recording:
@@ -881,6 +1039,7 @@ CONTENT_TYPES = {
     ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
     ".js": "text/javascript; charset=utf-8", ".png": "image/png", ".webp": "image/webp",
     ".svg": "image/svg+xml", ".woff2": "font/woff2",
+    ".ttf": "font/ttf",
     ".m3u8": "application/vnd.apple.mpegurl", ".mp4": "video/mp4", ".m4s": "video/mp4",
 }
 STATIC_PATHS = {"/": WEB / "index.html", "/style.css": WEB / "style.css", "/tv.js": WEB / "tv.js",
@@ -889,14 +1048,25 @@ STATIC_PATHS = {"/": WEB / "index.html", "/style.css": WEB / "style.css", "/tv.j
                 "/program.js": WEB / "program.js", "/program.css": WEB / "program.css",
                 "/playback.js": WEB / "playback.js", "/recordings.js": WEB / "recordings.js",
                 "/studio.js": WEB / "studio.js", "/studio.css": WEB / "studio.css",
+                "/picture.js": WEB / "picture.js", "/picture.css": WEB / "picture.css",
                 "/appearance.js": WEB / "appearance.js", "/hls.min.js": WEB / "hls.min.js",
+                "/qrcode.js": WEB / "qrcode.js", "/mobile-share.js": WEB / "mobile-share.js",
+                "/mobile-share.css": WEB / "mobile-share.css",
                 "/assets/canales/catalogo.js": CHANNEL_LOGOS / "catalogo.js",
                 "/assets/fonts/InterVariable.woff2": ROOT / "assets" / "fonts" / "InterVariable.woff2",
+                "/assets/fonts/GeistMono-Variable.ttf": ROOT / "assets" / "fonts" / "GeistMono-Variable.ttf",
                 "/assets/changelog-innsmouth.webp": ROOT / "assets" / "changelog-innsmouth.webp",
+                "/assets/live-picture-innsmouth.webp": ROOT / "assets" / "live-picture-innsmouth.webp",
                 "/assets/arkhamtv-mark.svg": ROOT / "assets" / "arkhamtv-mark.svg",
                 "/assets/logo_arkhamtv.png": ROOT / "assets" / "logo_arkhamtv.png",
                 "/assets/logo_arkhamtv.svg": ROOT / "assets" / "logo_arkhamtv.svg",
                 "/assets/logo_arkhamtv-claro.svg": ROOT / "assets" / "logo_arkhamtv-claro.svg"}
+
+if SIGNAL_ANALYSIS:
+    STATIC_PATHS.update({"/" + name: WEB / name for name in (
+        "broadcast-channel-picker.js", "signal-analysis.js", "signal-analysis.css", "signal-scene.js", "teletext.css", "teletext.js",
+        "vendor/three.module.min.js", "vendor/three.core.min.js", "vendor/d3.min.js",
+    )})
 
 
 def handler(tv):
@@ -984,6 +1154,45 @@ def handler(tv):
             if path == "/api/status":
                 self.send_json(tv.status())
                 return
+            if path == "/api/hdmi-devices" and hdmi.available():
+                try:
+                    if hdmi.linux_enabled():
+                        from native.hdmi_linux import authorization_socket, missing_interfaces
+
+                        missing = missing_interfaces()
+                        if missing:
+                            self.send_json({"video": [], "audio": [], "authorized": False,
+                                            "missingInterfaces": missing, "hdmiHelper": authorization_socket().is_socket()})
+                            return
+                    inputs = hdmi.devices()
+                    if hdmi.linux_enabled():
+                        with tv.lock:
+                            permissions = {kind: bool(os.environ.get("SNAP")) or kind in tv.hdmi_permissions
+                                           for kind in ("video", "audio")}
+                        inputs = {kind: [{key: item[key] for key in ("id", "name", "group")} for item in choices]
+                                  for kind, choices in inputs.items()}
+                        inputs.update(permissions=permissions, authorized=all(permissions.values()))
+                    self.send_json(inputs)
+                except (OSError, ValueError, subprocess.SubprocessError):
+                    self.send_json({"error": "No se pudieron consultar las entradas de captura HDMI." if hdmi.linux_enabled()
+                                    else "No se pudieron consultar las capturadoras de macOS."}, HTTPStatus.CONFLICT)
+                return
+            if SIGNAL_ANALYSIS and path == "/api/signal-analysis":
+                self.send_json(tv.signal_analysis())
+                return
+            if SIGNAL_ANALYSIS and path == "/api/teletext":
+                query = parse_qs(url.query)
+                try:
+                    number = int(query.get("page", ["100"])[0])
+                    subpage = int(query.get("subpage", ["-1"])[0])
+                    revision = int(query.get("revision", ["-1"])[0])
+                    if not 100 <= number <= 899 or not -1 <= subpage <= 0x3F7F or revision < -1:
+                        raise ValueError
+                except ValueError:
+                    self.send_json({"error": "Elige una página entre 100 y 899."}, HTTPStatus.BAD_REQUEST)
+                    return
+                self.send_json(tv.teletext(number, subpage, revision))
+                return
             if path == "/api/levels":
                 query = parse_qs(url.query)
                 try:
@@ -1029,6 +1238,13 @@ def handler(tv):
                     if path == "/":
                         body = body.replace(b"{{APP_VERSION}}", APP_VERSION.encode("ascii"))
                         body = body.replace(b"{{CHANGELOG_ENTRIES}}", CHANGELOG)
+                        if SIGNAL_ANALYSIS:
+                            body = body.replace(b"<!-- SIGNAL_ASSETS -->",
+                                                b'<link rel="stylesheet" href="/signal-analysis.css">\n'
+                                                b'<link rel="stylesheet" href="/teletext.css">\n'
+                                                b'<script src="/broadcast-channel-picker.js" defer></script>\n'
+                                                b'<script src="/signal-analysis.js" defer></script>\n'
+                                                b'<script src="/teletext.js" defer></script>')
                     self.send_bytes(body, CONTENT_TYPES[file.suffix])
                     return
             self.send_json({"error": "No disponible."}, HTTPStatus.NOT_FOUND)
@@ -1046,7 +1262,19 @@ def handler(tv):
                 if not isinstance(data, dict):
                     raise ValueError
                 path = urlsplit(self.path).path
-                if path == "/api/scan":
+                if path == "/api/mobile-start":
+                    address = data.get("address")
+                    if address is not None and not isinstance(address, str):
+                        raise ValueError
+                    try:
+                        self.send_json(tv.mobile.start(address, "en" if data.get("language") == "en" else "es"))
+                    except (ValueError, OSError, subprocess.SubprocessError):
+                        self.send_json({"error": "No se pudo abrir la conexión local. Comprueba la red del ordenador."},
+                                       HTTPStatus.CONFLICT)
+                    return
+                elif path == "/api/mobile-stop":
+                    tv.mobile.stop()
+                elif path == "/api/scan":
                     first, last = data.get("first"), data.get("last")
                     fresh = data.get("fresh", False)
                     if (type(fresh) is not bool or type(first) is not int or type(last) is not int
@@ -1106,6 +1334,30 @@ def handler(tv):
                     if not isinstance(channel, str):
                         raise ValueError
                     tv.start_stream(channel)
+                elif path == "/api/hdmi-start" and hdmi.available():
+                    video, audio = data.get("video"), data.get("audio")
+                    deinterlace, gain = data.get("deinterlace", "auto"), data.get("gain", 0)
+                    if not all(isinstance(value, str) and 0 < len(value) <= 512 for value in (video, audio)):
+                        raise TunerError("Selecciona la entrada de vídeo y el audio de la capturadora HDMI.")
+                    if deinterlace not in ("auto", "on", "off") or type(gain) is not int or gain not in (0, 6, 12, 18):
+                        raise TunerError("Elige un ajuste válido de vídeo y audio HDMI.")
+                    tv.start_hdmi(video, audio, deinterlace, gain)
+                elif path == "/api/hdmi-permission" and hdmi.linux_enabled() and not os.environ.get("SNAP"):
+                    kind = data.get("kind")
+                    if kind not in ("video", "audio"):
+                        raise TunerError("Elige un permiso de captura HDMI válido.")
+                    with tv.lock:
+                        tv.hdmi_permissions.add(kind)
+                elif SIGNAL_ANALYSIS and path == "/api/signal-tune":
+                    channel = data.get("id")
+                    if not isinstance(channel, str):
+                        raise ValueError
+                    tv.tune_for_analysis(channel)
+                elif SIGNAL_ANALYSIS and path == "/api/teletext-tune":
+                    channel = data.get("id")
+                    if not isinstance(channel, str):
+                        raise ValueError
+                    tv.tune_for_teletext(channel)
                 elif path == "/api/autoplay":
                     tv.autoplay()
                 elif path == "/api/guide-refresh":
@@ -1235,7 +1487,8 @@ def main():
             raise
         local_server = LocalServer(0, handler(tv), idle_timeout=args.idle_timeout)
     with local_server as server:
-        server.keep_alive = lambda: any(job["state"] in {"scheduled", "recording", "finishing"} for job in tv.recordings.jobs)
+        server.keep_alive = lambda: bool(tv.mobile.status()["url"]) or any(
+            job["state"] in {"scheduled", "recording", "finishing"} for job in tv.recordings.jobs)
         stop = threading.Event()
         worker = threading.Thread(target=tv.maintenance, args=(stop,), daemon=True)
         worker.start()

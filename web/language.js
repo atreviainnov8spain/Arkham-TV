@@ -149,6 +149,19 @@ Al aplicar un cambio se vuelve a conectar la emisión.|Applying a change reconne
 Aplicar ajuste|Apply settings
 CONFIGURACIÓN DE ANTENA|ANTENNA SETUP
 Comprobando la conexión USB…|Checking the USB connection…
+Sintonizador TDT|Terrestrial TV tuner
+Ver en el móvil|Watch on your phone
+Escanea el QR con la cámara. Conecta ambos dispositivos a la misma red Wi-Fi.|Scan the QR code with your camera. Connect both devices to the same Wi-Fi network.
+Dirección de red|Network address
+Código QR para ver Arkham TV|QR code to watch Arkham TV
+Enlace para abrir en el móvil|Link to open on your phone
+Al abrir el enlace, gira el móvil para ver la TV en horizontal.|When the link opens, rotate your phone to watch in landscape.
+Dejar de compartir|Stop sharing
+Preparando la conexión local…|Preparing the local connection…
+No se pudo abrir la conexión local. Comprueba la red del ordenador.|Could not start the local connection. Check your computer's network.
+Sin sintonizador detectado|No tuner detected
+Conecta un sintonizador para buscar canales.|Connect a tuner to scan for channels.
+Conectado|Connected
 Nueva ubicación|New location
 Busca canales desde cero.|Scan for channels from scratch.
 Rango UHF|UHF range
@@ -212,6 +225,7 @@ Versión actual|Current version
 Historial de versiones|Release history
 © Creado por Óscar Peña, 2026|© Created by Óscar Peña, 2026
 Sintonizador DVB-T|DVB-T tuner
+Sintonizador DVB-T/T2|DVB-T/T2 tuner
 No se pudo completar la operación.|Could not complete the operation.
 El navegador no pudo reproducir esta emisión.|The browser could not play this stream.
 Instala los códecs de Ubuntu ejecutando Arkham TV con --preparar-ventana.|Run Arkham TV with --preparar-ventana to install the Ubuntu codecs.
@@ -229,6 +243,65 @@ Elige un canal para verlo.|Select a channel to watch.
 Actualizando la guía|Refreshing the guide
 Buscando tus canales|Scanning for channels
 Estamos recibiendo la programación por antena.|Receiving the schedule from your antenna.
+Entrada HDMI|HDMI input
+Ajuste equilibrado para el uso diario.|Balanced settings for everyday viewing.
+Tonos cálidos y una curva de luz pensada para ver cine con poca luz.|Warm tones and a light curve for watching films in a dim room.
+Imagen y cadencia de la emisión, sin realce añadido ni interpolación de movimiento.|The source picture and frame cadence, with no added sharpening or motion interpolation.
+Más brillo y saturación para una imagen más intensa.|Higher brightness and saturation for a more vivid picture.
+Ajusta la imagen a tu gusto y guarda tus valores.|Adjust the picture to your taste and save your settings.
+Ajuste personal guardado.|Personal settings saved.
+Ajuste personal reemplazado.|Personal settings replaced.
+No se pudo guardar el ajuste personal.|Could not save your personal settings.
+Entrada HDMI con capturadora de vídeo|HDMI input with a video capture device
+Activar capturadora HDMI|Enable HDMI capture
+¿Permitir el vídeo de la capturadora?|Allow video from the capture device?
+¿Permitir el audio de la capturadora?|Allow audio from the capture device?
+Arkham TV usará la imagen que el receptor envía por HDMI.|Arkham TV will use the picture sent by the receiver over HDMI.
+Arkham TV usará el sonido que el receptor envía por HDMI.|Arkham TV will use the sound sent by the receiver over HDMI.
+Confirma el acceso al vídeo y al audio para iniciar la captura.|Confirm access to video and audio to start capture.
+Autoriza los permisos pendientes para ver la entrada HDMI.|Allow the remaining permissions to watch the HDMI input.
+Volver a intentar|Try again
+Permitido|Allowed
+Pendiente|Pending
+Abriendo la entrada HDMI…|Opening the HDMI input…
+Conecta una capturadora HDMI a USB a Ubuntu y pulsa Actualizar.|Connect an HDMI to USB capture device to Ubuntu and press Refresh.
+Instala el auxiliar HDMI una sola vez. Guarda el archivo, ábrelo en el Centro de aplicaciones y vuelve aquí.|Install the HDMI helper once. Save the file, open it in App Center and return here.
+Comprobar instalación|Check installation
+Ubuntu pedirá la contraseña de administrador para permitir el acceso a la cámara y al audio.|Ubuntu will ask for an administrator password to allow camera and audio access.
+Esperando la autorización de Ubuntu…|Waiting for Ubuntu authorization…
+Se ha cancelado la autorización de Ubuntu.|Ubuntu authorization was cancelled.
+Ubuntu no pudo conceder todos los permisos. Vuelve a intentarlo.|Ubuntu could not grant all permissions. Try again.
+Abre el archivo .deb que acabas de guardar para instalar el auxiliar.|Open the .deb file you just saved to install the helper.
+No se pudo guardar el auxiliar HDMI.|Could not save the HDMI helper.
+Concedido en Ubuntu|Allowed in Ubuntu
+Pendiente en Ubuntu|Pending in Ubuntu
+No hay entradas disponibles.|No inputs available.
+No se detecta el audio USB de la capturadora. Comprueba la conexión y pulsa Actualizar.|No USB audio detected from the capture device. Check the connection and press Refresh.
+Autoriza el vídeo y el audio de la capturadora HDMI.|Allow video and audio from the HDMI capture device.
+Elige un permiso de captura HDMI válido.|Choose a valid HDMI capture permission.
+No se pudieron consultar las entradas de captura HDMI.|Could not list HDMI capture inputs.
+No se pudo consultar la capturadora de vídeo.|Could not read the video capture device.
+Ubuntu no permite acceder al vídeo. Comprueba que la capturadora esté conectada a esta sesión.|Ubuntu denied access to video. Check that the capture device is connected to this session.
+La capturadora de vídeo está en uso. Ciérrala en la otra aplicación y vuelve a intentarlo.|The video capture device is in use. Close it in the other app and try again.
+La capturadora no ofrece un formato de vídeo compatible hasta 1080p.|The capture device does not offer a supported video format up to 1080p.
+Se interrumpió la captura HDMI. Revisa la entrada USB, el receptor y el audio en Ubuntu.|HDMI capture stopped. Check the USB input, receiver and Ubuntu audio.
+HDMI · Cambia de canal con el mando del receptor|HDMI · Change channels with the receiver’s remote
+Estamos recibiendo la entrada HDMI.|Receiving the HDMI input.
+Buscando entradas de captura…|Looking for capture inputs…
+Elige la capturadora|Choose a capture device
+Elige el audio de la capturadora|Choose the capture device’s audio
+No se detecta ninguna entrada de vídeo. Conecta el receptor a una capturadora de vídeo HDMI a USB (por ejemplo, la Elgato Cam Link 4K) y enchufa la capturadora al Mac.|No video input detected. Connect the receiver to an HDMI to USB video capture device (such as the Elgato Cam Link 4K), then plug the capture device into the Mac.
+No hay entradas de audio. Comprueba la capturadora y los permisos de macOS.|No audio inputs found. Check the capture device and macOS permissions.
+Activa Cámara y Micrófono para Arkham TV en Privacidad y seguridad de macOS.|Allow Camera and Microphone access for Arkham TV in macOS Privacy & Security.
+Autoriza la cámara y el micrófono para abrir la captura HDMI.|Allow camera and microphone access to open the HDMI capture.
+No se pudieron consultar las capturadoras de macOS.|Could not list macOS capture devices.
+Selecciona la entrada de vídeo y el audio de la capturadora HDMI.|Select the HDMI capture device’s video and audio inputs.
+Detén la grabación antes de cambiar la entrada HDMI.|Stop recording before changing the HDMI input.
+Abre la entrada HDMI antes de grabar.|Open the HDMI input before recording.
+La grabación por HDMI admite hasta 1080p.|HDMI recording supports up to 1080p.
+Elige un ajuste válido de vídeo y audio HDMI.|Choose a valid HDMI video and audio setting.
+Se graba el audio que envía el receptor por HDMI.|The recording uses the audio sent by the receiver over HDMI.
+Se interrumpió la captura HDMI. Revisa la entrada USB, el receptor y los permisos de macOS.|HDMI capture stopped. Check the USB capture device, the receiver and macOS permissions.
 Estamos recorriendo las frecuencias de tu antena.|Scanning your antenna frequencies.
 Emisión interrumpida|Stream interrupted
 Busca canales para empezar.|Scan for channels to get started.
@@ -273,6 +346,7 @@ Silenciado|Muted
 Sin señal de audio|No audio signal
 Nivel / pico|Level / peak
 Por debajo de −60 dBFS|Below −60 dBFS
+Por debajo de −72 dBFS|Below −72 dBFS
 La emisora no ha enviado una sinopsis.|The broadcaster did not provide a synopsis.
 Ver lo que se emite ahora|Watch what's on now
 Grabación programada. Puedes gestionarla en Grabaciones.|Recording scheduled. Manage it in Recordings.
@@ -347,8 +421,20 @@ Diseño|Design
 Sintonía|Tuning
 Reproducción|Playback
 Compatibilidad|Compatibility
-Conecta el AVerMedia A835 a un puerto USB del Mac.|Plug the AVerMedia A835 into a USB port on your Mac.
+Conecta un sintonizador de TV compatible al Mac.|Connect a compatible TV tuner to your Mac.
+Conecta un sintonizador USB compatible o un receptor HDMI mediante una capturadora USB.|Connect a compatible USB tuner or an HDMI receiver through a USB capture device.
+Conecta un sintonizador USB compatible para buscar canales.|Connect a compatible USB tuner to scan for channels.
+Sin sintonizador USB detectado|No USB tuner detected
+Sin fuente activa|No active input
+Entrada HDMI activa|HDMI input active
+Receptor HDMI externo|External HDMI receiver
 Conecta un AVerMedia A835 o A835B al USB de Ubuntu.|Plug an AVerMedia A835 or A835B into Ubuntu.
+Conecta un AVerMedia A835 o A835B. Si ya está conectado, comprueba que Ubuntu lo reconozca como dispositivo DVB.|Plug in an AVerMedia A835 or A835B. If it is already plugged in, check that Ubuntu recognises it as a DVB device.
+Conecta un sintonizador DVB-T o DVB-T2. Si ya está conectado, comprueba que Ubuntu lo reconozca como dispositivo DVB.|Plug in a DVB-T or DVB-T2 tuner. If it is already plugged in, check that Ubuntu recognises it as a DVB device.
+Sintonizador conectado al controlador DVB de Ubuntu.|Tuner connected to the Ubuntu DVB driver.
+Tu usuario no tiene acceso al sintonizador DVB. Comprueba el grupo video y vuelve a iniciar sesión.|Your account cannot access the DVB tuner. Check the video group and sign in again.
+No se pudo consultar el sintonizador DVB. Comprueba el controlador de Ubuntu.|Could not query the DVB tuner. Check the Ubuntu driver.
+El sintonizador no admite DVB-T ni DVB-T2.|The tuner supports neither DVB-T nor DVB-T2.
 A835 conectado por USB|A835 connected via USB
 Activa el permiso de acceso DVB de Arkham TV en Ubuntu.|Enable DVB access for Arkham TV in Ubuntu.
 A835 detectado. Ejecuta preparar.command para instalar el firmware.|A835 detected. Run preparar.command to install its firmware.
@@ -367,6 +453,7 @@ La búsqueda superó el tiempo máximo.|The scan timed out.
 Guía actualizada.|TV guide updated.
 La antena no ha recibido nuevos horarios.|No new listings were received from the antenna.
 Sin canales DVB-T. Revisa la antena o prueba otro rango UHF.|No DVB-T channels found. Check the antenna or try another UHF range.
+Sin canales DVB-T ni DVB-T2. Revisa la antena o prueba otro rango UHF.|No DVB-T or DVB-T2 channels found. Check the antenna or try another UHF range.
 Ese canal no está en la lista.|That channel is not in the list.
 Elige un canal sintonizado.|Choose a tuned channel.
 La guía ha cambiado. Vuelve a seleccionar el programa.|The guide has changed. Select the programme again.
@@ -376,6 +463,15 @@ No se pudo iniciar la grabación.|Could not start the recording.
 La emisión se interrumpió. Revisa la antena y la conexión USB.|The stream was interrupted. Check the antenna and USB connection.
 Escribe un nombre para la sintonización.|Enter a name for the channel list.
 Selecciona una sintonización guardada.|Select a saved channel list.
+Abrir página|Open page
+Índice del teletexto|Teletext index
+Modo de lectura|Reading mode
+Elige una página entre 100 y 899.|Choose a page from 100 to 899.
+Espera a que termine la grabación para cambiar de canal en Teletexto.|Wait until recording finishes to switch channels in Teletext.
+Vistas del análisis|Signal analysis views
+Elegir un canal|Choose a channel
+Frecuencias encontradas|Frequencies found
+Espera a que termine la grabación para cambiar de canal en Análisis de señal.|Wait until recording finishes to switch channels in Signal analysis.
 Escribe una carpeta local válida.|Enter a valid local folder.
 Selecciona un programa de la guía.|Select a programme from the guide.
 Selecciona una grabación.|Select a recording.
@@ -409,13 +505,15 @@ La emisión se reanudará al terminar.|Playback will resume when it finishes.
   const patterns = [
     [/^(A835B?) conectado al controlador DVB de Ubuntu$/, "$1 connected to the Ubuntu DVB driver"],
     [/^(\d+) canales de TV encontrados\.$/, "$1 TV channels found."],
-    [/^No se obtuvo señal DVB-T en UHF (\d+)\.$/, "No DVB-T signal on UHF $1."],
+    [/^No se obtuvo señal (DVB-T(?:2|\/T2)?) en UHF (\d+)\.$/, "No $1 signal on UHF $2."],
     [/^Grabando en UHF (\d+)\. Elige un canal de esa frecuencia o detén la grabación\.$/,
       "Recording on UHF $1. Choose a channel on that frequency or stop recording."],
     [/^Grabación en UHF (\d+)\. Puedes ver otro canal de esa frecuencia\.$/,
       "Recording on UHF $1. You can watch another channel on that frequency."],
     [/^Ubuntu necesita el firmware del (A835B?)\. Actualiza linux-firmware y vuelve a conectar el sintonizador\.$/,
       "Ubuntu needs the $1 firmware. Update linux-firmware and reconnect the tuner."],
+    [/^El (A835B?) necesita firmware\. Ejecuta arkham-tv --preparar y reconecta el USB\.$/,
+      "The $1 needs firmware. Run arkham-tv --preparar and reconnect the USB tuner."],
     [/^Ubuntu aún no ha creado el dispositivo DVB\. Reconecta el (A835B?) y comprueba el módulo dvb_usb_af9035\.$/,
       "Ubuntu has not created the DVB device yet. Reconnect the $1 and check the dvb_usb_af9035 module."],
     [/^Tu usuario no tiene acceso al (A835B?)\. Comprueba el grupo video y vuelve a iniciar sesión\.$/,

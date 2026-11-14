@@ -158,9 +158,11 @@ class Sections:
 
 
 class EIT(Sections):
-    def __init__(self, frequency, audio=None):
+    def __init__(self, frequency, audio=None, analysis=None, teletext=None):
         super().__init__()
         self.audio = audio
+        self.analysis = analysis
+        self.teletext = teletext
         self.frequency = frequency
         self.remainder = b""
         self.seen = {}
@@ -179,8 +181,12 @@ class EIT(Sections):
                 if offset + PACKET < len(data) and data[offset + PACKET] != 0x47:
                     offset += 1
                     continue
+            pid = (data[offset + 1] & 31) << 8 | data[offset + 2]
+            if self.analysis is not None:
+                self.analysis.packet(pid, data, offset)
             if not data[offset + 1] & 0x80:
-                pid = (data[offset + 1] & 31) << 8 | data[offset + 2]
+                if self.teletext is not None:
+                    self.teletext.packet_at(pid, data, offset)
                 if pid == 0x12:
                     self.packet(data[offset:offset + PACKET], changes)
                 elif self.audio is not None and self.audio.accepts(pid):

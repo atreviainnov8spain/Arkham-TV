@@ -12,7 +12,7 @@ case "$mode" in
   --preparar-ventana)
     sudo apt-get update
     exec sudo apt-get install python3-gi gir1.2-gtk-3.0 gir1.2-gstreamer-1.0 gir1.2-webkit2-4.1 \
-      gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-libav ;;
+      gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-tools gstreamer1.0-pulseaudio pulseaudio-utils ;;
   --help|-h)
     printf '%s\n' 'Abre la ventana de Arkham TV en Ubuntu.' '  --preparar       Instala el firmware del A835 o A835B si falta.' \
       '  --preparar-ventana  Instala las bibliotecas de la ventana y los códecs de Ubuntu.' \
@@ -87,6 +87,7 @@ case "$mode" in
 esac
 
 if [ "$mode" = '' ]; then
+  export ARKHAM_LINUX_HDMI=1
   # X11 permits positioning and keeping the mini player above the desktop.
   if [ -n "${DISPLAY:-}" ]; then export GDK_BACKEND="${GDK_BACKEND:-x11}"; fi
   # Parallels can decode video but display a black frame on WebKit's DMA-BUF path.

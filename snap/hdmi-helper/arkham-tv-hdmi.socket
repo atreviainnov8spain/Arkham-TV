@@ -1,0 +1,13 @@
+[Unit]
+Description=Arkham TV HDMI authorization
+
+[Socket]
+ListenStream=/run/snap.arkham-tv/hdmi-authorization
+SocketMode=0666
+DirectoryMode=0755
+Accept=yes
+MaxConnectionsPerSource=4
+RemoveOnStop=yes
+
+[Install]
+WantedBy=sockets.target

@@ -1,0 +1,57 @@
+#!/bin/sh
+set -eu
+if [ "${1:-}" = --version ]; then
+  printf 'Arkham TV %s\n' "$SNAP_VERSION"
+  exit 0
+fi
+
+case "$SNAP_ARCH" in
+  arm64) triplet=aarch64-linux-gnu ;;
+  amd64) triplet=x86_64-linux-gnu ;;
+esac
+runtime="$SNAP/gnome-platform"
+lib="$runtime/usr/lib/$triplet"
+gpu="$SNAP/gpu/usr/lib/$triplet"
+export PATH="$SNAP/app/bin:$runtime/usr/bin:$PATH"
+export ARKHAM_LINUX_HDMI=1
+export LD_LIBRARY_PATH="${SNAP_LIBRARY_PATH:+$SNAP_LIBRARY_PATH:}$SNAP/lib:$lib:$lib/pulseaudio:$gpu:$runtime/usr/lib"
+export LIBGL_DRIVERS_PATH="$gpu/dri"
+export GBM_BACKENDS_PATH="$gpu/gbm"
+export __EGL_VENDOR_LIBRARY_DIRS="$SNAP/gpu/usr/share/glvnd/egl_vendor.d"
+export PYTHONPATH="$runtime/usr/lib/python3/dist-packages"
+export GI_TYPELIB_PATH="$lib/girepository-1.0"
+export GST_PLUGIN_SYSTEM_PATH_1_0="$SNAP/lib/gstreamer-1.0:$lib/gstreamer-1.0"
+export GST_PLUGIN_SCANNER_1_0="$lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
+export GIO_MODULE_DIR="$lib/gio/modules"
+# snapd gives the app its own runtime directory. Use the desktop PulseAudio
+# socket (also provided by PipeWire) for playback when libpulse needs a server.
+if [ -z "${PULSE_SERVER:-}" ] && [ -n "${XDG_RUNTIME_DIR:-}" ]; then
+  pulse_socket="${XDG_RUNTIME_DIR%/*}/pulse/native"
+  if [ -S "$pulse_socket" ]; then
+    export PULSE_SERVER="unix:$pulse_socket"
+  fi
+fi
+# WebKit loads the app over loopback. The desktop proxy portal rejects calls
+# from the confined network process, even when the destination is localhost.
+export GIO_USE_PROXY_RESOLVER=dummy
+export XDG_DATA_DIRS="$runtime/usr/share:$SNAP/usr/share:${XDG_DATA_DIRS:-/usr/share}"
+# The GNOME runtime cache contains absolute loader paths from its build system.
+# Point them at the mounted content snap inside this application's namespace.
+pixbuf_cache="$SNAP_USER_DATA/pixbuf-loaders.cache"
+pixbuf_tmp=$(mktemp "$SNAP_USER_DATA/pixbuf-loaders.XXXXXX")
+trap 'rm -f "$pixbuf_tmp"' EXIT HUP INT TERM
+sed "s|^\"/usr/|\"$runtime/usr/|" \
+  "$lib/gdk-pixbuf-2.0/2.10.0/loaders.cache" >"$pixbuf_tmp"
+mv -f "$pixbuf_tmp" "$pixbuf_cache"
+trap - EXIT HUP INT TERM
+export GDK_PIXBUF_MODULE_FILE="$pixbuf_cache"
+export GTK_USE_PORTAL=1
+if [ -n "${DISPLAY:-}" ]; then export GDK_BACKEND="${GDK_BACKEND:-x11}"; fi
+if [ "$(systemd-detect-virt --vm 2>/dev/null || true)" = parallels ]; then
+  export WEBKIT_DISABLE_DMABUF_RENDERER=1 WEBKIT_GST_DMABUF_SINK_DISABLED=1
+fi
+if [ "${1:-}" = --diagnostico ]; then
+  cd "$SNAP/app"
+  exec /usr/bin/python3 -B -c 'from app import probe; import json; print(json.dumps(probe(), ensure_ascii=False))'
+fi
+exec /usr/bin/python3 -B "$SNAP/app/desktop.py" "$SNAP_USER_COMMON"

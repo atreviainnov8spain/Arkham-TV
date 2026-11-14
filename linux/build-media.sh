@@ -41,9 +41,9 @@ PKG_CONFIG_PATH="$build/prefix/lib/pkgconfig" "$ffmpeg_source/configure" \
   ${asm_flag:+"$asm_flag"} --disable-network --disable-ffplay --disable-avdevice \
   --disable-everything --enable-gpl --enable-libx264 \
   --enable-encoder=libx264,aac \
-  --enable-decoder=h264,hevc,mpeg2video,mp2,mp3,aac,aac_latm,ac3,eac3 \
+  --enable-decoder=h264,hevc,mpeg2video,mp2,mp3,aac,aac_latm,ac3,eac3,rawvideo,pcm_s16le \
   --enable-parser=h264,hevc,mpegvideo,mpegaudio,aac,aac_latm,ac3 \
-  --enable-demuxer=mpegts,hls,mov --enable-muxer=hls,mpegts,mp4,mov \
+  --enable-demuxer=mpegts,hls,mov,matroska --enable-muxer=hls,mpegts,mp4,mov \
   --enable-protocol=file,pipe --enable-filter=bwdif,fps,scale,format,aresample,adelay,tpad,aformat,volume,equalizer,alimiter,astats,ametadata,asplit,acrossover,amerge,asetnsamples,anullsink
 make -j "${ARKHAM_BUILD_JOBS:-5}" ffmpeg ffprobe
 cp ffmpeg ffprobe "$build/bin/"

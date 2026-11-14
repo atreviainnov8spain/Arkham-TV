@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+  "https://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <vendor>Arkham TV</vendor>
+  <action id="com.arkhamtv.hdmi.connect">
+    <description>Allow HDMI capture in Arkham TV</description>
+    <description xml:lang="es">Permitir la captura HDMI en Arkham TV</description>
+    <message>Authenticate to allow camera and audio recording access for HDMI in Arkham TV.</message>
+    <message xml:lang="es">Autentícate para permitir el acceso a cámara y grabación de audio para HDMI en Arkham TV.</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin</allow_active>
+    </defaults>
+  </action>
+</policyconfig>

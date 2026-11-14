@@ -1,0 +1,17 @@
+[Unit]
+Description=Arkham TV HDMI authorization request
+After=snapd.socket polkit.service
+Requires=snapd.socket
+
+[Service]
+ExecStart=/usr/bin/python3 -I /usr/lib/arkham-tv-hdmi/authorize.py
+StandardInput=socket
+StandardOutput=journal
+StandardError=journal
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateDevices=yes
+PrivateTmp=yes
+RestrictAddressFamilies=AF_UNIX
+RuntimeMaxSec=150

@@ -1,5 +1,51 @@
 import AppKit
+import AVFoundation
+import CoreAudio
 import WebKit
+
+private func describeCaptureInputs() throws {
+    let video = AVCaptureDevice.devices(for: .video)
+    let audio = AVCaptureDevice.devices(for: .audio)
+    func inputs(_ devices: [AVCaptureDevice], video: Bool) -> [[String: Any]] {
+        devices.compactMap { device in
+            guard device.transportType == kAudioDeviceTransportTypeUSB ||
+                  device.transportType == kAudioDeviceTransportTypeThunderbolt else { return nil }
+            let name = device.localizedName
+            // FFmpeg parses a numeric prefix as an index and otherwise matches by name prefix.
+            guard !name.isEmpty, !name.contains(":"), !name.hasPrefix("default"), !name.hasPrefix("none"),
+                  name.range(of: #"^\s*[+-]?\d"#, options: .regularExpression) == nil,
+                  devices.filter({ $0.localizedName.hasPrefix(name) }).count == 1 else { return nil }
+            if video {
+                let external = device.deviceType == .externalUnknown
+                if !external {
+                    if #available(macOS 14.0, *) {
+                        guard device.deviceType == .external else { return nil }
+                    } else { return nil }
+                }
+                let modes = device.formats.flatMap { format -> [[String: Any]] in
+                    let size = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+                    guard size.width <= 1920, size.height <= 1080, size.width >= 640 else { return [] }
+                    return format.videoSupportedFrameRateRanges.compactMap { range in
+                        let duration = range.minFrameDuration
+                        guard range.maxFrameRate >= 20, range.maxFrameRate <= 60.1,
+                              duration.value > 0, duration.timescale > 0 else { return nil }
+                        return ["width": size.width, "height": size.height,
+                                "rate": "\(duration.timescale)/\(duration.value)", "fps": range.maxFrameRate]
+                    }
+                }
+                if modes.isEmpty { return nil }
+                return ["id": device.uniqueID, "name": name, "modes": modes]
+            }
+            return ["id": device.uniqueID, "name": name]
+        }
+    }
+    let result: [String: Any] = [
+        "video": inputs(video, video: true), "audio": inputs(audio, video: false),
+        "authorized": AVCaptureDevice.authorizationStatus(for: .video) == .authorized &&
+                      AVCaptureDevice.authorizationStatus(for: .audio) == .authorized,
+    ]
+    FileHandle.standardOutput.write(try JSONSerialization.data(withJSONObject: result))
+}
 
 private let desktopPort = 8766
 private let windowTitleItem = NSToolbarItem.Identifier("ArkhamTV.windowTitle")
@@ -37,7 +83,7 @@ final class ArkhamTV: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavig
         settings.preferences.isElementFullscreenEnabled = true
         settings.userContentController.add(self, name: "arkhamLanguage")
         settings.userContentController.addUserScript(WKUserScript(
-            source: "window.arkhamNative = true;",
+            source: "window.arkhamNative = true; window.arkhamPicture = true;",
             injectionTime: .atDocumentStart,
             forMainFrameOnly: true
         ))
@@ -66,6 +112,14 @@ final class ArkhamTV: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavig
         window.setFrameAutosaveName("Arkham TV")
         window.contentView = loadingView()
         window.center()
+        if let visible = (window.screen ?? NSScreen.main)?.visibleFrame {
+            var frame = window.frame
+            frame.origin.x = visible.minX
+            frame.size.width = visible.width
+            frame.size.height = min(frame.height, visible.height)
+            frame.origin.y = max(visible.minY, min(frame.minY, visible.maxY - frame.height))
+            window.setFrame(frame, display: false)
+        }
         installMenu()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -144,6 +198,7 @@ final class ArkhamTV: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavig
             "ARKHAM_USB_LIBRARY": Bundle.main.bundleURL.appendingPathComponent("Contents/Frameworks/a835-usb.dylib").path,
             "ARKHAM_FIRMWARE": resources.appendingPathComponent("dvb-usb-af9035-02.fw").path,
             "ARKHAM_VIDEOTOOLBOX": "1",
+            "ARKHAM_CAPTURE_HOST": Bundle.main.executableURL!.path,
         ]
         service.standardOutput = log
         service.standardError = log
@@ -326,11 +381,30 @@ final class ArkhamTV: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavig
             chooseRecordingFolder()
             return
         }
+        if local, url?.path == "/autorizar-captura-hdmi", navigationAction.navigationType == .linkActivated {
+            decisionHandler(.cancel)
+            AVCaptureDevice.requestAccess(for: .video) { camera in
+                guard camera else {
+                    DispatchQueue.main.async { self.capturePermissions(video: false, audio: false) }
+                    return
+                }
+                AVCaptureDevice.requestAccess(for: .audio) { audio in
+                    DispatchQueue.main.async { self.capturePermissions(video: true, audio: audio) }
+                }
+            }
+            return
+        }
         if navigationAction.navigationType == .linkActivated, let url, url.scheme == "https",
            ["www.imdb.com", "www.omdbapi.com"].contains(url.host ?? "") {
             NSWorkspace.shared.open(url)
         }
         decisionHandler(local ? .allow : .cancel)
+    }
+
+    private func capturePermissions(video: Bool, audio: Bool) {
+        webView.callAsyncJavaScript(
+            "window.dispatchEvent(new CustomEvent('arkham-hdmi-permissions', { detail: { video, audio } }));",
+            arguments: ["video": video, "audio": audio], in: nil, in: .page, completionHandler: nil)
     }
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
@@ -370,6 +444,11 @@ final class ArkhamTV: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavig
         alert.addButton(withTitle: tr("Cerrar", "Close"))
         alert.beginSheetModal(for: window) { _ in NSApp.terminate(nil) }
     }
+}
+
+if CommandLine.arguments == [CommandLine.arguments[0], "--capture-devices"] {
+    do { try describeCaptureInputs(); exit(0) }
+    catch { fputs("\(error)\n", stderr); exit(1) }
 }
 
 let app = NSApplication.shared

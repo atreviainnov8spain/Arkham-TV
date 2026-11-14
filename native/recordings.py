@@ -8,6 +8,7 @@ import re
 import secrets
 import stat
 import time
+import unicodedata
 
 from .channels import clean_channel_name
 
@@ -132,13 +133,13 @@ class Recordings:
     def reserve(self, job):
         folder = Path(job["folder"])
         folder.mkdir(parents=True, exist_ok=True)
-        cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]+', " ", job["title"])
-        title = " ".join(cleaned.split()).strip(" .") or "Grabación"
-        title = title.encode("utf-8")[:145].decode("utf-8", "ignore").strip(" .")
-        date = datetime.fromtimestamp(job["start"]).strftime("%Y-%m-%d %H-%M")
+        normalized = unicodedata.normalize("NFKD", job["title"])
+        unaccented = "".join(character for character in normalized if not unicodedata.combining(character))
+        title = re.sub(r"[^A-Za-z0-9]+", "_", unaccented).strip("_")[:145].rstrip("_") or "Grabacion"
+        date = datetime.fromtimestamp(job["start"]).strftime("%Y_%m_%d_%H_%M")
         for number in range(1, 1000):
-            suffix = f" ({number})" if number > 1 else ""
-            path = folder / f"{title} · {date}{suffix}.mp4"
+            suffix = f"_{number}" if number > 1 else ""
+            path = folder / f"{title}_{date}{suffix}.mp4"
             try:
                 with path.open("xb"):
                     return path

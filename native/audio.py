@@ -19,7 +19,7 @@ def valid_gains(value):
     )
 
 
-def audio_chain(gains, delay):
+def audio_chain(gains, delay, *, continuous=False):
     filters = ["aformat=channel_layouts=stereo"]
     if delay > 0:
         filters.append(f"adelay={delay}:all=1")
@@ -31,9 +31,10 @@ def audio_chain(gains, delay):
     crossover = " ".join(str(round(math.sqrt(low * high))) for low, high in zip(BANDS, BANDS[1:]))
     stats = "astats=metadata=1:reset=1:measure_overall=none:measure_perchannel="
     report = "ametadata=mode=print:file='pipe\\:1':direct=1"
+    resample = "aresample=48000:async=100:out_chlayout=stereo" if continuous else "aresample=48000"
     # Measure a copy so that the crossover does not alter the audio sent to the player.
     return (
-        ",".join(filters) + ",aresample=48000,asetnsamples=n=1920:p=0,asplit[playback][analysis];"
+        ",".join([*filters, resample]) + ",asetnsamples=n=1920:p=0,asplit[playback][analysis];"
         f"[analysis]acrossover=split={crossover}:order=4th{bands};"
         f"{bands}amerge=inputs={len(BANDS)},{stats}RMS_level,{report},anullsink;"
         f"[playback]{stats}RMS_level+Peak_level,{report}"

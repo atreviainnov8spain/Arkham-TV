@@ -6,13 +6,19 @@ import os
 from pathlib import Path
 import shutil
 import signal
+import socket
 import subprocess
 import sys
+import threading
 import time
 from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parent
 TITLE = "Arkham TV"
+
+# WebKitGTK's DMA-BUF renderer can show the video outside the layer that
+# carries the picture controls. Set this before WebKit starts its subprocesses.
+os.environ.setdefault("WEBKIT_DISABLE_DMABUF_RENDERER", "1")
 
 try:
     import gi
@@ -38,6 +44,8 @@ class Desktop(Gtk.Application):
         self.data = data
         self.window = self.view = self.server = self.lock = None
         self.folder_picker = None
+        self.hdmi_request = None
+        self.hdmi_package_picker = None
         self.mini = None
         self.mini_active = False
         self.origin = None
@@ -92,6 +100,7 @@ class Desktop(Gtk.Application):
         self.window.connect("destroy", lambda *_: self.quit())
         self.window.add(Gtk.Label(label=self.tr("Conectando Arkham TV…", "Connecting to Arkham TV…")))
         self.window.show_all()
+        self.window.maximize()
         self.window.present()
         GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, self.quit)
         GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, self.quit)
@@ -215,8 +224,11 @@ class Desktop(Gtk.Application):
         content = self.view.get_user_content_manager()
         content.register_script_message_handler("arkhamLanguage")
         content.connect("script-message-received::arkhamLanguage", self.change_language)
+        if os.environ.get("SNAP"):
+            content.register_script_message_handler("arkhamHDMIAuthorize")
+            content.connect("script-message-received::arkhamHDMIAuthorize", self.authorize_hdmi)
         content.add_script(WebKit2.UserScript.new(
-            "window.arkhamLinux = true;", WebKit2.UserContentInjectedFrames.TOP_FRAME,
+            "window.arkhamLinux = true; window.arkhamPicture = true;", WebKit2.UserContentInjectedFrames.TOP_FRAME,
             WebKit2.UserScriptInjectionTime.START, None, None,
         ))
         self.view.connect("decide-policy", self.navigation_policy)
@@ -243,6 +255,11 @@ class Desktop(Gtk.Application):
                 if path == "/elegir-carpeta-grabacion" and action.get_navigation_type() == WebKit2.NavigationType.LINK_CLICKED:
                     decision.ignore()
                     self.choose_recording_folder()
+                    return True
+                if (path == "/guardar-auxiliar-hdmi" and os.environ.get("SNAP") and
+                        action.get_navigation_type() == WebKit2.NavigationType.LINK_CLICKED):
+                    decision.ignore()
+                    self.save_hdmi_package()
                     return True
                 # The local player needs an explicit autoplay policy in addition to WebKit's gesture setting.
                 decision.use_with_policies(WebKit2.WebsitePolicies(autoplay=WebKit2.AutoplayPolicy.ALLOW))
@@ -285,6 +302,71 @@ class Desktop(Gtk.Application):
         picker.connect("response", selected)
         picker.connect("destroy", lambda *_: setattr(self, "folder_picker", None))
         picker.present()
+
+    def hdmi_result(self, kind, result):
+        event = f"window.dispatchEvent(new CustomEvent('arkham-hdmi-{kind}', {{detail: {json.dumps(result)}}}));"
+        if self.view:
+            self.view.evaluate_javascript(event, -1, None, None, None, None, None)
+
+    def authorize_hdmi(self, *_):
+        uri = urlsplit(self.view.get_uri() or "")._replace(fragment="").geturl()
+        if self.hdmi_request is not None or uri != self.origin + "/":
+            return
+        from native.hdmi_linux import authorization_socket
+
+        connection = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.hdmi_request = connection
+
+        def complete(result):
+            self.hdmi_request = None
+            self.hdmi_result("authorization", result)
+
+        def request():
+            try:
+                with connection:
+                    connection.settimeout(140)
+                    connection.connect(str(authorization_socket()))
+                    connection.sendall(b"A")
+                    with connection.makefile("rb") as stream:
+                        result = {b"ok\n": "ok", b"denied\n": "denied"}.get(stream.readline(16), "error")
+            except (FileNotFoundError, ConnectionRefusedError):
+                result = "missing"
+            except OSError as error:
+                print(error, file=sys.stderr)
+                result = "error"
+            GLib.idle_add(complete, result)
+
+        threading.Thread(target=request, daemon=True).start()
+
+    def save_hdmi_package(self):
+        if self.hdmi_package_picker is not None:
+            return
+        package = Path(os.environ["SNAP"]) / "app" / "arkham-tv-hdmi.deb"
+        picker = Gtk.FileChooserNative.new(
+            self.tr("Guardar el auxiliar de permisos HDMI", "Save the HDMI permissions helper"),
+            self.window, Gtk.FileChooserAction.SAVE, self.tr("Guardar", "Save"), self.tr("Cancelar", "Cancel"),
+        )
+        picker.set_current_name(package.name)
+        picker.set_do_overwrite_confirmation(True)
+        downloads = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DOWNLOAD)
+        if downloads:
+            picker.set_current_folder(downloads)
+        self.hdmi_package_picker = picker
+
+        def selected(dialog, response):
+            if response == Gtk.ResponseType.ACCEPT:
+                try:
+                    dialog.get_file().replace_contents(package.read_bytes(), None, False, Gio.FileCreateFlags.NONE, None)
+                except (OSError, GLib.Error) as error:
+                    print(error, file=sys.stderr)
+                    self.hdmi_result("package", "error")
+                else:
+                    self.hdmi_result("package", "saved")
+            self.hdmi_package_picker = None
+            dialog.destroy()
+
+        picker.connect("response", selected)
+        picker.show()
 
     def enter_fullscreen(self, _view):
         self.window.fullscreen()

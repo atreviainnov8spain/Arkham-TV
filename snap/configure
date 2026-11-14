@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+
+# WebKitGTK buffers HTTP media in /var/tmp. Give the snap's desktop users
+# a private temporary directory backed by disk, including after refreshes.
+install -d -m 1777 "$SNAP_COMMON/webkit-media-cache"

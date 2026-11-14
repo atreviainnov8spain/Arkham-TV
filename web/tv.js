@@ -2,6 +2,7 @@
 
 const byId = (id) => document.getElementById(id);
 const video = byId("video");
+createPictureControls(video);
 const playButton = byId("play");
 const soundButton = byId("sound");
 const screen = byId("screen");
@@ -20,6 +21,7 @@ const liveStartup = createPlaybackStartup(video, () => {
 }, { trackDecodedFrames: Boolean(window.arkhamLinux) });
 const playerVolume = byId("player-volume");
 const volumeValue = byId("player-volume-value");
+if (window.arkhamLinux) volumeValue.classList.add("volume-value-linux");
 const volumeSliders = [playerVolume, byId("monitor-volume")];
 const audioDelayFields = byId("audio-delay-fields");
 const audioDelayPicker = byId("audio-delay-picker");
@@ -53,6 +55,7 @@ let latest = null;
 let audioOptionsKey = null;
 let audioChannelId = null;
 let audioSelectionKey = null;
+const hdmiButtons = document.querySelectorAll("[data-hdmi-open]");
 const muteKey = "arkhamtv.muted";
 try {
   video.muted = localStorage.getItem(muteKey) === "true";
@@ -95,7 +98,7 @@ function syncSound() {
   monitorSound.querySelector("use").setAttribute("href", icon);
   monitorSound.setAttribute("aria-label", label);
   const level = Math.round(video.volume * 100);
-  const displayLevel = level + " %";
+  const displayLevel = window.arkhamLinux ? `${level}\u202f%` : `${level} %`;
   if (volumeValue.textContent !== displayLevel) {
     volumeValue.textContent = displayLevel;
     playerVolume.style.setProperty("--volume-level", level + "%");
@@ -131,7 +134,10 @@ function unloadVideo() {
 }
 
 function requestLivePlayback() {
-  if (liveSource && !playerError) liveStartup.start();
+  if (liveSource && !playerError) {
+    liveSource.userPaused = false;
+    liveStartup.start();
+  }
 }
 
 playButton.addEventListener("click", requestLivePlayback);
@@ -174,6 +180,7 @@ window.addEventListener("blur", endVolumeDrag);
 monitorPlay.addEventListener("click", () => {
   if (video.paused) requestLivePlayback();
   else {
+    if (liveSource) liveSource.userPaused = true;
     liveStartup.cancel();
     video.pause();
   }
@@ -183,12 +190,12 @@ video.addEventListener("play", syncMonitorPlay);
 video.addEventListener("pause", syncMonitorPlay);
 video.addEventListener("playing", () => { playButton.hidden = true; });
 
-function attachStream(stream, reloaded = false) {
+function attachStream(stream, reloaded = false, userPaused = false) {
   if (liveSource) unloadVideo();
-  const source = liveSource = { stream, reloaded };
+  const source = liveSource = { stream, reloaded, userPaused };
   streamId = stream.id;
   video.hidden = false;
-  liveStartup.start(true);
+  if (!userPaused) liveStartup.start(true);
   const nativeHLS = video.canPlayType("application/vnd.apple.mpegurl");
   if (window.arkhamNative && nativeHLS) {
     video.src = stream.url;
@@ -215,13 +222,18 @@ function attachStream(stream, reloaded = false) {
   syncMonitorPlay();
 }
 
-function syncLivePlayback(stream) {
+function syncLivePlayback(stream, restorePicture = false) {
   const inArchive = activeView === "#grabaciones" || activeView === "#grabacion";
   if (inArchive || !stream?.ready || (tuningTo && tuningTo !== stream.channel)) {
     if (liveSource) unloadVideo();
     return;
   }
   if (stream.id !== streamId) attachStream(stream);
+  else if (restorePicture && window.arkhamNative && !player && liveSource) {
+    // macOS WebKit may keep playing audio after hiding the video layer.
+    // Reattach the current playlist once the Live view is visible again.
+    attachStream(stream, false, liveSource.userPaused);
+  }
 }
 
 function playbackError(message) {
@@ -376,21 +388,28 @@ function renderChannels(state) {
 function renderPlayer(state) {
   const { hardware, scan, stream } = state;
   const selected = state.channels.find((channel) => channel.id === stream?.channel);
-  text("channel-name", selected?.name || arkhamLanguage.t("Televisión en directo"));
-  text("mini-channel", selected?.name || arkhamLanguage.t("Televisión en directo"));
-  text("mini-program", state.program?.title || arkhamLanguage.t("Sin información del programa"));
-  text("channel-frequency", selected
+  const sourceName = stream?.hdmi?.name || selected?.name || arkhamLanguage.t("Televisión en directo");
+  const hdmiDetail = arkhamLanguage.t("HDMI · Cambia de canal con el mando del receptor");
+  text("channel-name", sourceName);
+  text("mini-channel", sourceName);
+  text("mini-program", stream?.hdmi ? hdmiDetail : state.program?.title || arkhamLanguage.t("Sin información del programa"));
+  text("channel-frequency", stream?.hdmi ? hdmiDetail : selected
     ? "UHF " + selected.uhf + " · " + (selected.frequency / 1e6).toLocaleString(arkhamLanguage.locale) + " MHz"
     : arkhamLanguage.t("Señal de antena · TDT"));
   const ready = Boolean(stream?.ready && stream.id === streamId && !playerError);
   const scanning = scan.state === "running";
+  const mobileShare = byId("mobile-share-open");
+  mobileShare.disabled = !stream && !state.mobileSharing;
+  mobileShare.toggleAttribute("data-sharing", state.mobileSharing);
   const refreshingGuide = scanning && scan.kind === "guide";
   const connecting = Boolean(stream || state.autoplayPending || (hardware.ready && !autoplayRequested));
+  const offerHDMI = hasHDMI(state) && !ready && !scanning && !connecting;
   video.hidden = !ready;
   const showPlayControl = ready && monitorControls.hidden;
   monitorControls.hidden = !ready;
   if (showPlayControl) revealPlayControl();
   byId("screen-message").hidden = ready;
+  byId("screen-hdmi-open").hidden = !offerHDMI;
   byId("on-air").classList.toggle("live", ready);
   text("player-state", miniMode ? ready ? arkhamLanguage.t("MINI · EN DIRECTO") : arkhamLanguage.t("MINIRREPRODUCTOR")
     : ready ? arkhamLanguage.t("EN DIRECTO") : refreshingGuide ? arkhamLanguage.t("ACTUALIZANDO GUÍA") : scanning ? arkhamLanguage.t("BUSCANDO CANALES") :
@@ -406,8 +425,11 @@ function renderPlayer(state) {
       detail = playerError || arkhamLanguage.message(state.streamError);
     } else if (connecting) {
       title = arkhamLanguage.t("Preparando la emisión");
-      detail = selected ? arkhamLanguage.f("Sintonizando {name}…", "Tuning to {name}…", { name: selected.name })
+      detail = stream?.hdmi ? arkhamLanguage.t("Estamos recibiendo la entrada HDMI.")
+        : selected ? arkhamLanguage.f("Sintonizando {name}…", "Tuning to {name}…", { name: selected.name })
         : arkhamLanguage.t("Estamos conectando con tu antena.");
+    } else if (offerHDMI && !hardware.ready && !(hardware.connected ?? Boolean(hardware.usb))) {
+      detail = arkhamLanguage.t("Conecta un sintonizador USB compatible o un receptor HDMI mediante una capturadora USB.");
     } else if (!hardware.ready || !state.channels.length) {
       detail = arkhamLanguage.message(!hardware.ready ? hardware.message : scan.message) || arkhamLanguage.t("Busca canales para empezar.");
     }
@@ -501,7 +523,7 @@ function renderTuningProfiles(state, blocked) {
   }
   byId("tuning-name").disabled = byId("tuning-save-button").disabled = blocked || !state.channels.length;
   for (const button of list.querySelectorAll("button")) {
-    button.disabled = blocked || Boolean(state.recordingUhf && !button.classList.contains("tuning-delete"));
+    button.disabled = blocked || (state.recordingUhf != null && !button.classList.contains("tuning-delete"));
   }
 }
 
@@ -512,22 +534,51 @@ function renderScanLabel(state) {
   text("scan-label", label);
 }
 
+function hasHDMI(state) {
+  return Boolean(state?.hdmiAvailable && (window.arkhamNative || window.arkhamLinux));
+}
+
+function renderTunerStatus(hardware, connected, hdmiAvailable = false) {
+  const tunerLabel = arkhamLanguage.t("Sintonizador TDT");
+  const tunerName = connected ? (hardware.model ? `AVerMedia ${hardware.model}` : hardware.name?.trim()) : "";
+  const systems = hardware.systems?.join(" / ");
+  const missing = !connected && hardware.connected !== null;
+  const diagnostic = arkhamLanguage.message(hardware.message);
+  const status = hardware.ready
+    ? [systems, arkhamLanguage.t("Conectado")].filter(Boolean).join(" · ")
+    : missing ? arkhamLanguage.t(hdmiAvailable ? "Conecta un sintonizador USB compatible para buscar canales."
+      : "Conecta un sintonizador para buscar canales.") : diagnostic;
+  text("device-title", missing ? arkhamLanguage.t(hdmiAvailable ? "Sin sintonizador USB detectado" : "Sin sintonizador detectado") : tunerName || tunerLabel);
+  text("device-message", status);
+  byId("device-message").title = diagnostic || "";
+  text("footer-tuner", [tunerName || tunerLabel, systems].filter(Boolean).join(" · "));
+}
+
 function render(state) {
   latest = state;
+  signalAnalysis?.render(state, pending);
+  teletext?.render(state, pending);
   if (activeView === "#configuracion") renderAudioSettings(state);
   const { hardware, scan, stream } = state;
   const scanning = scan.state === "running";
-  const reception = !hardware.usb ? "usb" : hardware.signal === true ? "ready" : hardware.signal === false ? "rf" : "waiting";
-  const labels = { usb: arkhamLanguage.t("USB desconectado"), ready: arkhamLanguage.t("Antena conectada"), rf: arkhamLanguage.t("Sin señal de antena"), waiting: arkhamLanguage.t("Sintonizador listo") };
-  const tips = { usb: arkhamLanguage.t("Conecta el sintonizador por USB."), ready: arkhamLanguage.t("La antena recibe señal de TV."),
+  byId("hdmi-open").hidden = byId("tuner-hdmi").hidden = !hasHDMI(state);
+  for (const button of hdmiButtons) button.disabled = pending || scanning || state.recordingUhf != null;
+  text("tuner-hdmi-title", arkhamLanguage.t(stream?.hdmi ? "Entrada HDMI activa" : "Receptor HDMI externo"));
+  byId("hdmi-open").toggleAttribute("data-active", Boolean(stream?.hdmi));
+  byId("program").hidden = Boolean(stream?.hdmi);
+  const connected = hardware.connected ?? Boolean(hardware.usb);
+  const reception = !connected && hardware.connected !== null ? "usb"
+    : hardware.signal === true ? "ready" : hardware.signal === false ? "rf" : "waiting";
+  const labels = { usb: arkhamLanguage.t(hasHDMI(state) ? "Sin fuente activa" : "USB desconectado"), ready: arkhamLanguage.t("Antena conectada"), rf: arkhamLanguage.t("Sin señal de antena"), waiting: arkhamLanguage.t("Sintonizador listo") };
+  const tips = { usb: arkhamLanguage.t(hasHDMI(state) ? "Conecta un sintonizador USB compatible o un receptor HDMI mediante una capturadora USB." : "Conecta el sintonizador por USB."), ready: arkhamLanguage.t("La antena recibe señal de TV."),
     rf: arkhamLanguage.t("Revisa el cable de antena."), waiting: arkhamLanguage.t("Sintoniza un canal para comprobar la señal.") };
   const antenna = byId("connection-icon").parentElement;
-  antenna.dataset.reception = reception;
-  antenna.title = hardware.usb && !hardware.ready ? arkhamLanguage.message(hardware.message) : tips[reception];
-  text("connection-text", hardware.usb && !hardware.ready ? arkhamLanguage.t("Sintonizador en espera") : labels[reception]);
-  text("device-message", arkhamLanguage.message(hardware.message));
-  text("footer-tuner", hardware.model ? `AVerMedia ${hardware.model} - DVB-T` : arkhamLanguage.t("Sintonizador DVB-T"));
-  byId("scan").disabled = pending || scanning || !hardware.ready || Boolean(state.recordingUhf);
+  antenna.dataset.reception = stream?.hdmi ? (stream.ready ? "ready" : "waiting") : reception;
+  const tunerWaiting = !hardware.ready && (connected || hardware.connected === null);
+  antenna.title = stream?.hdmi?.name || (tunerWaiting ? arkhamLanguage.message(hardware.message) : tips[reception]);
+  text("connection-text", stream?.hdmi ? arkhamLanguage.t("Entrada HDMI") : tunerWaiting ? arkhamLanguage.t("Sintonizador en espera") : labels[reception]);
+  renderTunerStatus(hardware, connected, hasHDMI(state));
+  byId("scan").disabled = pending || scanning || !hardware.ready || state.recordingUhf != null;
   byId("scan-fresh").disabled = byId("scan").disabled;
   renderTuningProfiles(state, pending || scanning);
   recordingsView.render(state, pending);
@@ -579,7 +630,8 @@ async function refresh() {
     const antenna = byId("connection-icon").parentElement;
     delete antenna.dataset.reception;
     antenna.title = "";
-    text("device-message", arkhamLanguage.t("Abre iniciar.command para conectar con Arkham TV."));
+    for (const button of hdmiButtons) button.disabled = true;
+    renderTunerStatus({ connected: null, message: "Abre iniciar.command para conectar con Arkham TV." }, false);
     for (const button of document.querySelectorAll("#scan, #stop, .channel-card")) button.disabled = true;
     byId("scan-fresh").disabled = true;
     if (latest) {
@@ -588,12 +640,18 @@ async function refresh() {
     }
     audioDelayFields.disabled = true;
     setAudioDelayPickerOpen(false);
+    signalAnalysis?.disconnect();
+    teletext?.disconnect();
   }
 }
 
 async function action(name, data, reportError = showError) {
   if (pending) return;
   pending = true;
+  if (latest) {
+    signalAnalysis?.render(latest, pending);
+    teletext?.render(latest, pending);
+  }
   if (latest) {
     audioStudio.render(latest, pending);
     guide.render(latest, pending);
@@ -896,6 +954,381 @@ const guide = createGuide({ api, action, tune: tuneChannel, chooseCapture: captu
 const programInfo = createProgramInfo({ api });
 const recordingsView = createRecordings({ action, chooseCapture: captureOptions.choose, openRecording: (id) => navigateTo("#grabacion-" + id) });
 
+const hdmiDialog = byId("hdmi-dialog");
+const hdmiTitle = byId("hdmi-title");
+const hdmiForm = byId("hdmi-form");
+const hdmiVideo = byId("hdmi-video");
+const hdmiAudio = byId("hdmi-audio");
+const hdmiDeinterlace = byId("hdmi-deinterlace");
+const hdmiGain = byId("hdmi-gain");
+let hdmiAuthorized = false;
+let hdmiPermissions = {};
+let hdmiPermissionStep = null;
+let hdmiBusy = false;
+let hdmiInputs = { video: [], audio: [] };
+let hdmiMissingInterfaces = [];
+let hdmiHelper = false;
+const hdmiInterfaces = { video: "camera", audio: "audio-record" };
+
+function createHDMIChoice(select) {
+  const label = select.parentElement;
+  const caption = label.querySelector("span");
+  const chooser = document.createElement("div");
+  const button = document.createElement("button");
+  const menu = document.createElement("div");
+  chooser.className = "hdmi-choice";
+  button.type = "button";
+  button.className = "button secondary";
+  button.innerHTML = '<span></span><svg class="choice-chevron" aria-hidden="true"><use href="#i-chevron"/></svg>';
+  const value = button.firstElementChild;
+  caption.id = select.id + "-label";
+  value.id = select.id + "-value";
+  menu.id = select.id + "-choices";
+  menu.className = "choice-panel";
+  menu.setAttribute("role", "group");
+  menu.setAttribute("aria-labelledby", caption.id);
+  button.setAttribute("aria-labelledby", caption.id + " " + value.id);
+  button.setAttribute("aria-controls", menu.id);
+  select.hidden = true;
+  chooser.append(caption, button, menu, select);
+  label.replaceWith(chooser);
+  const optionButtons = () => [...menu.querySelectorAll("button")];
+
+  function open(show, focus = false) {
+    menu.hidden = !show;
+    button.setAttribute("aria-expanded", String(show));
+    if (show) {
+      chooser.classList.remove("is-above");
+      const bounds = button.getBoundingClientRect();
+      const edge = Math.min(window.innerHeight, hdmiDialog.getBoundingClientRect().bottom);
+      chooser.classList.toggle("is-above", edge - bounds.bottom < menu.offsetHeight + 5 && bounds.top > menu.offsetHeight);
+      (menu.querySelector('[aria-current="true"]') || optionButtons()[0])?.focus();
+    } else if (focus) button.focus();
+  }
+
+  function sync() {
+    value.textContent = select.selectedOptions[0]?.textContent || caption.textContent;
+    menu.replaceChildren(...[...select.options].filter(option => option.value && !option.disabled).map(option => {
+      const element = document.createElement("button");
+      const name = document.createElement("span");
+      element.type = "button";
+      element.className = "choice-option";
+      element.innerHTML = '<svg aria-hidden="true"><use href="#i-check"/></svg>';
+      name.textContent = option.textContent;
+      element.prepend(name);
+      if (option.selected) element.setAttribute("aria-current", "true");
+      element.addEventListener("click", () => {
+        select.value = option.value;
+        open(false, true);
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      return element;
+    }));
+    if (!menu.children.length) {
+      const empty = document.createElement("p");
+      empty.className = "hdmi-note";
+      empty.textContent = arkhamLanguage.t("No hay entradas disponibles.");
+      menu.append(empty);
+    }
+    if (!menu.hidden) open(false, menu.contains(document.activeElement));
+  }
+
+  button.addEventListener("click", () => open(menu.hidden));
+  select.addEventListener("change", sync);
+  chooser.addEventListener("keydown", event => {
+    if (menu.hidden && event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      open(false, true);
+    } else if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+      event.preventDefault();
+      if (menu.hidden) {
+        open(true);
+        return;
+      }
+      const items = optionButtons();
+      const index = items.indexOf(document.activeElement);
+      const next = event.key === "Home" ? 0 : event.key === "End" ? items.length - 1 :
+        Math.max(0, Math.min(items.length - 1, index + (event.key === "ArrowDown" ? 1 : -1)));
+      items[next]?.focus();
+    }
+  });
+  chooser.addEventListener("focusout", event => {
+    if (event.relatedTarget && !chooser.contains(event.relatedTarget)) open(false);
+  });
+  hdmiDialog.addEventListener("click", event => {
+    if (!chooser.contains(event.target)) open(false);
+  });
+  hdmiDialog.addEventListener("close", () => open(false));
+  open(false);
+  sync();
+  return sync;
+}
+
+const syncHDMIVideoChoice = createHDMIChoice(hdmiVideo);
+const syncHDMIAudioChoice = createHDMIChoice(hdmiAudio);
+const syncHDMIDeinterlaceChoice = createHDMIChoice(hdmiDeinterlace);
+const syncHDMIGainChoice = createHDMIChoice(hdmiGain);
+
+function setHDMIStep(step, focus = true) {
+  const titles = {
+    permissions: "Activar capturadora HDMI",
+    video: "¿Permitir el vídeo de la capturadora?",
+    audio: "¿Permitir el audio de la capturadora?",
+    form: "Entrada HDMI con capturadora de vídeo",
+  };
+  text("hdmi-title", arkhamLanguage.t(titles[step]));
+  const confirm = step === "audio" || step === "video";
+  hdmiPermissionStep = confirm ? step : null;
+  text("hdmi-grant", arkhamLanguage.t("Permitir"));
+  byId("hdmi-permissions").hidden = step !== "permissions";
+  byId("hdmi-confirm").hidden = !confirm;
+  hdmiForm.hidden = step !== "form";
+  if (confirm) {
+    text("hdmi-confirm-note", arkhamLanguage.t(step === "video"
+      ? "Arkham TV usará la imagen que el receptor envía por HDMI."
+      : "Arkham TV usará el sonido que el receptor envía por HDMI."));
+  }
+  if (focus && hdmiDialog.open) hdmiTitle.focus();
+}
+
+function showHDMIPermissions(reason = "intro", focus = true) {
+  const notes = {
+    intro: "Confirma el acceso al vídeo y al audio para iniciar la captura.",
+    denied: "Autoriza los permisos pendientes para ver la entrada HDMI.",
+  };
+  const system = hdmiMissingInterfaces.length > 0;
+  const install = system && !hdmiHelper;
+  const name = hdmiInputs.video.find(input => input.id === hdmiVideo.value)?.name;
+  text("hdmi-permission-device", name || "");
+  byId("hdmi-permission-device").hidden = !name;
+  text("hdmi-permission-note", arkhamLanguage.t(install
+    ? "Instala el auxiliar HDMI una sola vez. Guarda el archivo, ábrelo en el Centro de aplicaciones y vuelve aquí."
+    : system ? "Ubuntu pedirá la contraseña de administrador para permitir el acceso a la cámara y al audio." : notes[reason]));
+  byId("hdmi-helper-save").hidden = !install;
+  text("hdmi-permission-next", arkhamLanguage.t(install ? "Comprobar instalación" :
+    system ? "Permitir" : reason === "denied" ? "Volver a intentar" : "Continuar"));
+  for (const kind of ["video", "audio"]) {
+    const status = byId(`hdmi-${kind}-access`);
+    const allowed = system ? !hdmiMissingInterfaces.includes(hdmiInterfaces[kind]) :
+      Boolean(hdmiPermissions[kind]);
+    status.toggleAttribute("data-allowed", allowed);
+    status.textContent = arkhamLanguage.t(system ? (allowed ? "Concedido en Ubuntu" : "Pendiente en Ubuntu") :
+      (allowed ? "Permitido" : "Pendiente"));
+  }
+  setHDMIStep("permissions", focus);
+}
+
+function hdmiFeedback(message = "") {
+  text("hdmi-feedback", message);
+  byId("hdmi-feedback").hidden = !message;
+}
+function updateHDMIButton() {
+  byId("hdmi-start").disabled = hdmiBusy || !hdmiAuthorized || !hdmiVideo.value || !hdmiAudio.value;
+}
+
+function setHDMIBusy(busy) {
+  hdmiBusy = busy;
+  for (const id of ["hdmi-refresh", "hdmi-close", "hdmi-grant", "hdmi-deny", "hdmi-permission-next"]) {
+    byId(id).disabled = busy;
+  }
+  updateHDMIButton();
+}
+
+function syncHDMIAudio(preferred = "") {
+  const input = hdmiInputs.video.find(item => item.id === hdmiVideo.value);
+  const choices = hdmiInputs.audio;
+  const matches = input ? choices.filter(audio => input.group ? input.group === audio.group : input.name === audio.name) : [];
+  hdmiAudio.value = choices.some(item => item.id === preferred) ? preferred : matches.length === 1 ? matches[0].id : "";
+  syncHDMIAudioChoice();
+  updateHDMIButton();
+}
+
+async function refreshHDMI({ opening = false } = {}) {
+  if (hdmiBusy) return;
+  const linux = latest?.hdmiPermissionFlow;
+  setHDMIBusy(true);
+  if (opening) setHDMIStep("form", false);
+  hdmiFeedback(arkhamLanguage.t("Buscando entradas de captura…"));
+  try {
+    const { video, audio, authorized, permissions, missingInterfaces, hdmiHelper: helper } = await api("hdmi-devices");
+    hdmiAuthorized = authorized;
+    hdmiPermissions = permissions || {};
+    hdmiMissingInterfaces = missingInterfaces || [];
+    hdmiHelper = Boolean(helper);
+    hdmiInputs = { video, audio };
+    const selectedVideo = hdmiVideo.value || latest?.stream?.hdmi?.id;
+    const selectedAudio = hdmiAudio.value || latest?.stream?.hdmi?.audio;
+    hdmiVideo.replaceChildren(new Option(arkhamLanguage.t("Elige la capturadora"), ""),
+      ...video.map(input => new Option(input.name, input.id)));
+    hdmiAudio.replaceChildren(new Option(arkhamLanguage.t("Elige el audio de la capturadora"), ""),
+      ...audio.map(input => new Option(input.name, input.id)));
+    hdmiVideo.value = video.some(input => input.id === selectedVideo) ? selectedVideo : video.length === 1 ? video[0].id : "";
+    syncHDMIVideoChoice();
+    syncHDMIAudio(selectedAudio);
+    if (linux && hdmiMissingInterfaces.length) {
+      showHDMIPermissions();
+      hdmiFeedback("");
+      return;
+    }
+    if (linux && video.length && audio.length && !authorized) showHDMIPermissions();
+    else setHDMIStep("form", false);
+    if (linux) {
+      hdmiFeedback(!video.length ? arkhamLanguage.t("Conecta una capturadora HDMI a USB a Ubuntu y pulsa Actualizar.")
+        : !audio.length ? arkhamLanguage.t("No se detecta el audio USB de la capturadora. Comprueba la conexión y pulsa Actualizar.") : "");
+    } else {
+      hdmiFeedback(!video.length ? arkhamLanguage.t("No se detecta ninguna entrada de vídeo. Conecta el receptor a una capturadora de vídeo HDMI a USB (por ejemplo, la Elgato Cam Link 4K) y enchufa la capturadora al Mac.")
+        : !authorized ? arkhamLanguage.t("Autoriza la cámara y el micrófono para abrir la captura HDMI.")
+          : !audio.length ? arkhamLanguage.t("No hay entradas de audio. Comprueba la capturadora y los permisos de macOS.") : "");
+    }
+  } catch (error) {
+    hdmiAuthorized = false;
+    hdmiVideo.replaceChildren();
+    hdmiAudio.replaceChildren();
+    syncHDMIVideoChoice();
+    syncHDMIAudioChoice();
+    hdmiFeedback(error.message);
+  } finally {
+    setHDMIBusy(false);
+  }
+}
+for (const button of hdmiButtons) {
+  button.addEventListener("click", () => {
+    if (latest?.stream?.hdmi) {
+      hdmiDeinterlace.value = latest.stream.hdmi.deinterlace || "auto";
+      hdmiGain.value = String(latest.stream.hdmi.gain ?? 0);
+      syncHDMIDeinterlaceChoice();
+      syncHDMIGainChoice();
+    }
+    text("hdmi-computer", latest?.hdmiPermissionFlow ? "Ubuntu" : "Mac");
+    byId("hdmi-macos-permission").hidden = Boolean(latest?.hdmiPermissionFlow);
+    hdmiDialog.showModal();
+    refreshHDMI({ opening: true });
+  });
+}
+byId("hdmi-refresh").addEventListener("click", refreshHDMI);
+hdmiVideo.addEventListener("change", () => {
+  if (latest?.hdmiPermissionFlow) syncHDMIAudio();
+  else updateHDMIButton();
+});
+hdmiAudio.addEventListener("change", updateHDMIButton);
+window.addEventListener("arkham-hdmi-permissions", event => {
+  if (event.detail.video && event.detail.audio) refreshHDMI();
+  else hdmiFeedback(arkhamLanguage.t("Activa Cámara y Micrófono para Arkham TV en Privacidad y seguridad de macOS."));
+});
+async function startHDMI() {
+  if (!hdmiAuthorized || !hdmiVideo.value || !hdmiAudio.value || pending || hdmiBusy) return;
+  hdmiFeedback(latest?.hdmiPermissionFlow ? arkhamLanguage.t("Abriendo la entrada HDMI…") : "");
+  setHDMIBusy(true);
+  const input = { video: hdmiVideo.value, audio: hdmiAudio.value,
+    deinterlace: hdmiDeinterlace.value, gain: Number(hdmiGain.value) };
+  if (await action("hdmi-start", input, hdmiFeedback)) {
+    hdmiDialog.close();
+    navigateTo("#directo");
+  }
+  setHDMIBusy(false);
+}
+
+function requestHDMIPermission() {
+  if (hdmiBusy) return;
+  if (hdmiMissingInterfaces.length) {
+    if (!hdmiHelper) {
+      refreshHDMI();
+    } else {
+      setHDMIBusy(true);
+      hdmiFeedback(arkhamLanguage.t("Esperando la autorización de Ubuntu…"));
+      window.webkit.messageHandlers.arkhamHDMIAuthorize.postMessage("grant");
+    }
+    return;
+  }
+  if (!hdmiPermissions.video) setHDMIStep("video");
+  else if (!hdmiPermissions.audio) setHDMIStep("audio");
+  else {
+    hdmiAuthorized = true;
+    setHDMIStep("form");
+    if (!hdmiInputs.video.length || !hdmiInputs.audio.length) refreshHDMI();
+    else startHDMI();
+  }
+}
+
+hdmiDialog.addEventListener("cancel", event => { if (hdmiBusy) event.preventDefault(); });
+byId("hdmi-permission-dismiss").addEventListener("click", () => hdmiDialog.close());
+byId("hdmi-permission-next").addEventListener("click", requestHDMIPermission);
+byId("hdmi-deny").addEventListener("click", () => {
+  hdmiFeedback("");
+  showHDMIPermissions("denied");
+});
+async function approveHDMIPermission() {
+  if (!hdmiPermissionStep || hdmiBusy) return;
+  const kind = hdmiPermissionStep;
+  setHDMIBusy(true);
+  hdmiFeedback("");
+  try {
+    await api("hdmi-permission", { kind });
+    hdmiPermissions[kind] = true;
+  } catch (error) {
+    hdmiFeedback(error.message);
+  } finally {
+    setHDMIBusy(false);
+  }
+  if (hdmiPermissions[kind]) requestHDMIPermission();
+}
+window.addEventListener("arkham-hdmi-authorization", async event => {
+  setHDMIBusy(false);
+  if (!hdmiDialog.open) return;
+  await refreshHDMI();
+  if (event.detail === "denied") hdmiFeedback(arkhamLanguage.t("Se ha cancelado la autorización de Ubuntu."));
+  else if (event.detail !== "ok" || hdmiMissingInterfaces.length) {
+    hdmiFeedback(arkhamLanguage.t("Ubuntu no pudo conceder todos los permisos. Vuelve a intentarlo."));
+  }
+});
+window.addEventListener("arkham-hdmi-package", event => {
+  if (!hdmiDialog.open) return;
+  hdmiFeedback(arkhamLanguage.t(event.detail === "saved"
+    ? "Abre el archivo .deb que acabas de guardar para instalar el auxiliar."
+    : "No se pudo guardar el auxiliar HDMI."));
+});
+byId("hdmi-grant").addEventListener("click", () => approveHDMIPermission());
+hdmiForm.addEventListener("submit", event => {
+  event.preventDefault();
+  startHDMI();
+});
+
+const signalAnalysis = typeof createSignalAnalysis === "function" ? createSignalAnalysis({
+  api,
+  tune(id, reportError) {
+    tuningTo = id;
+    if (liveSource) unloadVideo();
+    return action("signal-tune", { id }, reportError).finally(() => {
+      tuningTo = null;
+      syncLivePlayback(latest?.stream);
+      if (latest) renderPlayer(latest);
+    });
+  },
+}) : null;
+if (signalAnalysis) {
+  routes.add("#analisis");
+  byId("signal-nav").hidden = false;
+}
+
+const teletext = typeof createTeletext === "function" ? createTeletext({
+  api,
+  tune(id, reportError) {
+    tuningTo = id;
+    if (liveSource) unloadVideo();
+    return action("teletext-tune", { id }, reportError).finally(() => {
+      tuningTo = null;
+      syncLivePlayback(latest?.stream);
+      if (latest) renderPlayer(latest);
+    });
+  },
+}) : null;
+if (teletext) {
+  routes.add("#teletexto");
+  byId("teletext-nav").hidden = false;
+}
+
 function tuneChannel(id) {
   if (!pending && (latest?.stream?.channel !== id || !latest?.stream?.ready || playerError)) {
     tuningTo = id;
@@ -927,6 +1360,10 @@ function syncNav() {
   favoritesPanel.hidden = !live && !listing;
   byId("favorites-catalog-link").hidden = !live;
   byId("sintonizador").hidden = current !== "#sintonizador";
+  byId("analisis").hidden = current !== "#analisis";
+  signalAnalysis?.navigate(current === "#analisis");
+  byId("teletexto").hidden = current !== "#teletexto";
+  teletext?.navigate(current === "#teletexto");
   if (current !== "#sintonizador" && tuningDeleteDialog.open) tuningDeleteDialog.close();
   byId("configuracion").hidden = !settings;
   if (!settings) setAudioDelayPickerOpen(false);
@@ -953,10 +1390,12 @@ function syncNav() {
     recordingsView.navigate(recording[1]);
   } else {
     recordingsView.navigate();
-    syncLivePlayback(latest?.stream);
+    syncLivePlayback(latest?.stream, live && previous !== current);
   }
   if (latest) renderPlayer(latest);
   if (live && previous !== current) revealPlayControl();
+  if (current === "#teletexto" && previous !== current) byId("teletext-title").focus({ preventScroll: true });
+  if (current === "#analisis" && previous !== current) byId("signal-title").focus({ preventScroll: true });
   if (current === "#changelog" && previous !== current) byId("changelog-title").focus({ preventScroll: true });
   for (const link of links) {
     if (link.hash === (recording ? "#grabaciones" : current)) link.setAttribute("aria-current", "location");

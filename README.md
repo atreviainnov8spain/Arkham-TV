@@ -2,11 +2,19 @@
 
 ![Arkham TV, televisión terrestre en directo y grabaciones locales](docs/store/banner.png)
 
-Arkham TV permite **ver y grabar la TDT en abierto** con un sintonizador USB AVerMedia AVerTV Volar compatible y una antena. Incluye guía de programación, selección de pista de audio, ecualizador de diez bandas, sincronización por canal, favoritos y perfiles de sintonización. La interfaz está disponible en español e inglés.
+Arkham TV permite **ver y grabar la TDT en abierto** en macOS y Linux. Usa un sintonizador USB con antena o un receptor de televisión conectado por HDMI a una capturadora USB. Incluye Guía TV, favoritos, perfiles de sintonización y un ecualizador de diez bandas. La interfaz está disponible en español e inglés.
 
 El proyecto está pensado para quienes tienen un **A835 o A835B** y han dejado de poder usarlo con su software habitual. Arkham TV permite seguir aprovechando el sintonizador con un portátil y una antena, también al viajar. Los perfiles guardan la lista de canales de cada lugar.
 
-[Descargas de la versión 1.8.22](https://github.com/atreviainnov8spain/Arkham-TV/releases/tag/v1.8.22) · [Historial de cambios](assets/changelog.json) · [Licencia](LICENSE.md)
+[Arkham TV en Snap Store](https://snapcraft.io/arkham-tv) · [Descargas de GitHub](https://github.com/atreviainnov8spain/Arkham-TV/releases) · [Historial de cambios](assets/changelog.json) · [Licencia](LICENSE.md)
+
+## Novedades de la 1.10
+
+- **Entrada HDMI** en macOS y Linux. Usa el mando del receptor para sintonizar y cambiar de canal. Arkham TV recibe el vídeo y el audio de la capturadora, permite grabar hasta 1080p con sonido estéreo y puede compartir la emisión en el móvil.
+- **Imagen** en En directo. Elige Estándar, Película, Cine Filmmaker o Vívido. Con **Personal** puedes ajustar brillo, contraste, nitidez y color mientras ves la emisión. **Guardar mi ajuste** guarda un único perfil personal y reemplaza el anterior.
+- **HDMI en Linux** con desentrelazado y cadencia ajustada a la capturadora. Con una entrada entrelazada de 25 fotogramas por segundo, el desentrelazado puede generar 50 fotogramas progresivos por segundo. El Snap estable publica esta actualización para ARM64 y AMD64.
+
+Las versiones anteriores incorporaron **Análisis de señal**, **Teletexto** y **Ver en el móvil**. El análisis de recepción, la Guía TV y el Teletexto recibidos por antena usan un sintonizador DVB. Para compartir la emisión, escanea el QR desde un iPhone o Android conectado a la misma red Wi-Fi.
 
 ## Capturas
 
@@ -22,26 +30,19 @@ El proyecto está pensado para quienes tienen un **A835 o A835B** y han dejado d
 
 ## Instalación
 
-### Ubuntu Desktop
+### Linux con Snap
 
-Descarga el paquete `.deb` de la release que corresponda a tu equipo. Ejecuta solo el comando de tu arquitectura desde la carpeta de descargas.
+Instala **Arkham TV** desde Snap Store o ejecuta `sudo snap install arkham-tv`. El canal estable distribuye la **1.10** para **ARM64** y **AMD64** (Intel y AMD de 64 bits). [Snap Store](https://snapcraft.io/arkham-tv)
 
-| Equipo | Arquitectura | Archivo |
-| --- | --- | --- |
-| PC Intel o AMD de 64 bits | amd64 | `Arkham-TV-1.8.22-Ubuntu-Intel-x86_64.deb` |
-| Ubuntu ARM64, incluido Parallels en Apple Silicon | arm64 | `Arkham-TV-1.8.22-Ubuntu-ARM64.deb` |
+Para usar un sintonizador de antena directa en una instalación nueva, habilita su acceso con `sudo snap connect arkham-tv:dvb`. [Permisos y compilación del Snap](snap/README.md)
 
-```sh
-# PC Intel o AMD
-sudo apt install ./Arkham-TV-1.8.22-Ubuntu-Intel-x86_64.deb
+### Ubuntu Desktop con paquete .deb
 
-# Ubuntu ARM64
-sudo apt install ./Arkham-TV-1.8.22-Ubuntu-ARM64.deb
-```
+El repositorio contiene el código de la **1.10**. La última descarga de GitHub incluye los paquetes **1.8.22** para AMD64 y ARM64. Los instaladores de la 1.10 se pueden generar con los pasos de compilación descritos abajo. [Descargas de la 1.8.22](https://github.com/atreviainnov8spain/Arkham-TV/releases/tag/v1.8.22)
 
-Abre **Arkham TV** desde el menú de aplicaciones. El paquete incorpora el lector DVB, FFmpeg y FFprobe. APT instala las dependencias del escritorio, entre ellas Python 3, GTK 3, WebKitGTK 4.1 y los complementos GStreamer para H.264 y AAC.
+Abre el paquete de tu arquitectura en el **Centro de aplicaciones** de Ubuntu. También puedes instalar el archivo con `sudo apt install ./nombre-del-paquete.deb` desde la carpeta de descargas. A continuación, abre **Arkham TV** desde el menú de aplicaciones. El paquete incluye el lector DVB, FFmpeg y FFprobe. Ubuntu instala las dependencias del escritorio.
 
-La edición `.deb` usa el acceso que Ubuntu concede al usuario de la sesión gráfica a los dispositivos DVB. Puedes comprobar el sintonizador ejecutando `arkham-tv --diagnostico` con tu usuario habitual. El paquete Snap tiene su propio sistema de permisos.
+La edición `.deb` usa los permisos que tiene el usuario de la sesión gráfica. Puedes comprobar el sintonizador con `arkham-tv --diagnostico`.
 
 ### Flatpak de prueba para ARM64
 
@@ -56,7 +57,16 @@ El paquete de prueba incluye acceso a dispositivos para que Arkham TV use `/dev/
 
 ### macOS
 
-Descarga `Arkham-TV-1.8.22-macOS-Universal.zip`, descomprímelo y abre **Arkham TV.app**. Requiere macOS 12.3 o posterior y admite Intel y Apple Silicon. El instalador original lleva firma local *ad hoc*. La edición para macOS incluye Python, las herramientas multimedia y el lector USB.
+La aplicación requiere macOS 12.3 o posterior y funciona en Intel y Apple Silicon. El ZIP universal de GitHub corresponde a la 1.8.22. Para generar la 1.10, sigue las instrucciones de compilación de macOS. La app empaquetada incluye Python, los códecs y el lector USB. [Descargas de GitHub](https://github.com/atreviainnov8spain/Arkham-TV/releases)
+
+## Ver un receptor por HDMI
+
+1. Conecta la antena al receptor TDT, por ejemplo un Edision nano T265+. Une su salida HDMI a una capturadora USB, como la Elgato Cam Link 4K, y conecta la capturadora al equipo.
+2. En Arkham TV, abre **En directo → Entrada HDMI**.
+3. En macOS, concede **Cámara** y **Micrófono** cuando el sistema lo pida. En el Snap de Ubuntu, si falta algún permiso, pulsa **Guardar auxiliar HDMI**, instala el archivo `arkham-tv-hdmi.deb` en el **Centro de aplicaciones** y vuelve a Arkham TV. Pulsa **Comprobar instalación** y después **Permitir**. Ubuntu solicita la autorización de un administrador. El auxiliar se instala una sola vez.
+4. Selecciona el vídeo y el audio de la capturadora, elige el desentrelazado y la ganancia que necesites y pulsa **Ver HDMI**.
+
+Si usas Parallels, asigna la capturadora a Ubuntu en **Dispositivos → USB**. El receptor gestiona la sintonización por antena. Usa su mando para cambiar de canal.
 
 ## Sintonizador y grabaciones
 
@@ -65,31 +75,32 @@ Descarga `Arkham-TV-1.8.22-macOS-Universal.zip`, descomprímelo y abre **Arkham 
 | Ubuntu | A835 (`07ca:a835`, `07ca:b835`) y A835B (`07ca:1835`, `07ca:2835`, `07ca:3835`, `07ca:4835`) | `dvb_usb_af9035` del kernel |
 | macOS | A835 (`07ca:a835`) | Controlador USB del proyecto sobre IOKit |
 
-Conecta la antena al sintonizador. En el primer arranque, Arkham TV busca servicios DVB-T entre los canales UHF 21 y 48. En **Sintonizador** puedes ajustar el rango y guardar listas para distintas ubicaciones. La guía usa los horarios y las sinopsis que envía cada emisora. La recepción de DVB-T2 requiere otro hardware.
+Conecta la antena al sintonizador. En el primer arranque, Arkham TV busca servicios DVB-T entre los canales UHF 21 y 48. En **Sintonizador** puedes ajustar el rango y guardar listas para distintas ubicaciones. La guía usa los horarios y las sinopsis que envía cada emisora. En Ubuntu, la recepción de DVB-T2 está disponible con un sintonizador y un controlador compatibles. Los A835 y A835B aquí descritos reciben DVB-T.
 
 El sintonizador recibe una frecuencia UHF cada vez. **Grabar** permite elegir pista de audio y resolución de salida entre 480p, 720p, 1080p y 4K. El archivo se guarda como MP4 con vídeo H.264 y audio AAC estéreo. Si la resolución de salida supera a la de la emisión, se amplía la imagen. Mantén la aplicación abierta y el equipo despierto para las grabaciones programadas.
 
 ## Arquitectura
 
 ```text
-Antena DVB-T → AVerMedia USB → flujo MPEG-TS
-                              ├─ SI/EIT → canales y guía TV
-                              └─ FFmpeg → HLS local y grabaciones MP4
-                                            └─ WebKit → imagen y audio
+Antena → Sintonizador DVB USB ──────────────┐
+Antena → Receptor TDT → Capturadora HDMI USB ┤
+                                           └─ FFmpeg → HLS local y grabaciones MP4
+                                                         └─ WebKit → imagen y audio
 ```
 
 | Componente | Función |
 | --- | --- |
 | [app.py](app.py) | Servidor HTTP local, sintonía, procesos de vídeo, API y ciclo de grabación. Escucha en `127.0.0.1`. |
-| [native/](native) | Detección USB, lector DVB, análisis de tablas MPEG-TS, guía, pistas de audio y grabaciones. |
+| [native/](native) | Detección USB, lector DVB, captura HDMI, análisis de tablas MPEG-TS, guía, pistas de audio y grabaciones. |
 | [linux/](linux) | Ventana GTK con WebKitGTK y GStreamer, lector C del dispositivo DVB y empaquetado para Ubuntu. |
 | [macos/](macos) | Ventana en Swift y WebKit, integración con macOS y empaquetado universal. |
+| [snap/](snap) | Empaquetado para Snapcraft y auxiliar gráfico de permisos HDMI. |
 | [web/](web) | Interfaz HTML, CSS y JavaScript, reproductor HLS, sincronización de audio, temas y traducciones. |
 | [assets/](assets) | Iconos, recursos gráficos, catálogo de canales, versión e historial bilingüe. |
 
 En Ubuntu, el servidor local se abre al iniciar la ventana. El lector utiliza `frontend`, `demux` y `dvr` del adaptador DVB que coincide con el identificador USB. FFmpeg prepara la emisión HLS y las grabaciones. El vúmetro muestra los niveles de la emisión, mientras que WebKit y GStreamer gestionan la reproducción por la salida de audio del sistema.
 
-Los ajustes se guardan en `${XDG_DATA_HOME:-~/.local/share}/arkham-tv` en Ubuntu y en `~/Library/Application Support/Arkham TV Desktop` en macOS. La aplicación usa por defecto la carpeta de vídeos del usuario para las grabaciones. La consulta opcional de fichas de cine envía a OMDb el título y, si se indica, el año.
+La edición nativa de Ubuntu guarda sus ajustes en `${XDG_DATA_HOME:-~/.local/share}/arkham-tv` y el Snap en `~/snap/arkham-tv/common`. En macOS, la app usa `~/Library/Application Support/Arkham TV Desktop`. La aplicación usa por defecto la carpeta de vídeos del usuario para las grabaciones. La consulta opcional de fichas de cine envía a OMDb el título y, si se indica, el año.
 
 ## Compilar la edición de Ubuntu
 
@@ -109,7 +120,7 @@ python3 linux/package.py "$ZIG" "$MEDIA" \
   --arch x86_64 --output dist
 ```
 
-Para macOS, [macos/build-ffmpeg.sh](macos/build-ffmpeg.sh) compila para ambas arquitecturas con las herramientas de Xcode. [macos/package.py](macos/package.py) documenta las rutas de entrada del framework oficial de Python 3.13, los binarios de FFmpeg y el firmware AF9035 verificado. El ZIP adjunto a la release es el instalador original.
+Para macOS, [macos/build-ffmpeg.sh](macos/build-ffmpeg.sh) compila para ambas arquitecturas con las herramientas de Xcode. [macos/package.py](macos/package.py) documenta las rutas de entrada del framework oficial de Python 3.13, los binarios de FFmpeg y el firmware AF9035 verificado. El empaquetador genera un ZIP universal. Para construir el Snap y su auxiliar HDMI, sigue los pasos de [snap/README.md](snap/README.md).
 
 ## Diagnóstico en Ubuntu
 

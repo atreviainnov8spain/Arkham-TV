@@ -1,6 +1,7 @@
-"""Use the Linux DVB driver for the AVerMedia A835 and A835B."""
+"""Tune DVB-T and DVB-T2 through the Linux DVB driver."""
 
 import argparse
+from functools import lru_cache
 import json
 import os
 from pathlib import Path
@@ -27,13 +28,24 @@ HELPER = Path(__file__).resolve().parents[1] / "bin" / "arkham-dvb"
 
 def usb_id(device):
     try:
-        identifier = ":".join((device / key).read_text().strip().lower() for key in ("idVendor", "idProduct"))
+        if os.environ.get("SNAP"):
+            # The Snap base policy permits uevent reads on the DVB device's
+            # ancestors. USB PRODUCT values omit leading zeroes.
+            event = (device / "uevent").read_text()
+            if "DEVTYPE=usb_device" not in event.splitlines():
+                return None
+            product = re.search(r"^PRODUCT=([0-9a-fA-F]{1,4})/([0-9a-fA-F]{1,4})/", event, re.MULTILINE)
+            if not product:
+                return None
+            identifier = ":".join(f"{int(part, 16):04x}" for part in product.groups())
+        else:
+            identifier = ":".join((device / key).read_text().strip().lower() for key in ("idVendor", "idProduct"))
     except OSError:
         return None
-    return identifier if identifier in USB_MODELS else None
+    return identifier
 
 
-def find_tuner():
+def frontends():
     for entry in sorted(Path("/sys/class/dvb").glob("dvb*.frontend*")):
         match = re.fullmatch(r"dvb(\d+)\.frontend(\d+)", entry.name)
         if not match:
@@ -41,12 +53,75 @@ def find_tuner():
         device = entry.resolve()
         identifier = next((identifier for parent in device.parents
                            if (identifier := usb_id(parent))), None)
-        if identifier:
-            adapter = Path("/dev/dvb") / f"adapter{match[1]}"
-            return identifier, [adapter / (name + match[2]) for name in ("frontend", "demux", "dvr")]
-    identifier = next((identifier for device in Path("/sys/bus/usb/devices").glob("*")
-                       if (identifier := usb_id(device))), None)
-    return identifier, []
+        adapter = Path("/dev/dvb") / f"adapter{match[1]}"
+        paths = tuple(adapter / (name + match[2]) for name in ("frontend", "demux", "dvr"))
+        # Some drivers expose several frontends with one shared demux/DVR pair.
+        if match[2] != "0" and not any(path.exists() for path in paths[1:]):
+            paths = (paths[0], adapter / "demux0", adapter / "dvr0")
+        if all(path.exists() for path in paths):
+            yield identifier, paths
+
+
+def avermedia_usb():
+    if os.environ.get("SNAP"):
+        return None
+    return next((identifier for device in Path("/sys/bus/usb/devices").glob("*")
+                 if (identifier := usb_id(device)) in USB_MODELS), None)
+
+
+@lru_cache(maxsize=32)
+def frontend_info(path, inode, changed_at):
+    # Cache capability reads until the device node changes on unplug/replug.
+    result = subprocess.run([str(HELPER), "--info", str(path)], capture_output=True,
+                            text=True, errors="replace", timeout=2)
+    if result.returncode == 2:
+        return [], ""
+    result.check_returncode()
+    systems, _, name = result.stdout.partition("\n")
+    return [system for system in systems.split() if system in {"DVB-T", "DVB-T2"}], " ".join(name.split())
+
+
+def select_tuner():
+    fallback = None
+    selected = None
+    for identifier, paths in sorted(frontends(), key=lambda item: item[0] not in USB_MODELS):
+        model = USB_MODELS.get(identifier)
+        if not all(os.access(path, mode) for path, mode in zip(paths, (os.R_OK | os.W_OK, os.R_OK | os.W_OK, os.R_OK))):
+            fallback = fallback or ({"usb": identifier, "model": model, "connected": True, "ready": False,
+                                     "message": "Tu usuario no tiene acceso al sintonizador DVB. Comprueba el grupo video y vuelve a iniciar sesión."}, ())
+            continue
+        try:
+            stat = paths[0].stat()
+            systems, name = frontend_info(paths[0], stat.st_ino, stat.st_ctime_ns)
+        except (OSError, subprocess.SubprocessError):
+            fallback = fallback or ({"usb": identifier, "model": model, "connected": True, "ready": False,
+                                     "message": "No se pudo consultar el sintonizador DVB. Comprueba el controlador de Ubuntu."}, ())
+            continue
+        if systems:
+            message = (f"{model} conectado al controlador DVB de Ubuntu" if model else
+                       "Sintonizador conectado al controlador DVB de Ubuntu.")
+            candidate = {"usb": identifier, "model": model, "name": name, "systems": systems,
+                         "connected": True, "ready": True, "message": message}, paths
+            if len(systems) == 2:
+                return candidate
+            selected = selected or candidate
+            continue
+        fallback = fallback or ({"usb": identifier, "model": model, "connected": True, "ready": False,
+                                 "message": "El sintonizador no admite DVB-T ni DVB-T2."}, ())
+    if selected:
+        return selected
+    if fallback:
+        return fallback
+
+    identifier = avermedia_usb()
+    model = USB_MODELS.get(identifier)
+    if not model:
+        message = "Conecta un sintonizador DVB-T o DVB-T2. Si ya está conectado, comprueba que Ubuntu lo reconozca como dispositivo DVB."
+    elif not all(firmware_present(name) for name in FIRMWARE_BY_MODEL[model]):
+        message = f"El {model} necesita firmware. Ejecuta arkham-tv --preparar y reconecta el USB."
+    else:
+        message = f"Ubuntu aún no ha creado el dispositivo DVB. Reconecta el {model} y comprueba el módulo dvb_usb_af9035."
+    return {"usb": identifier, "model": model, "connected": bool(identifier), "ready": False, "message": message}, ()
 
 
 def firmware_present(name):
@@ -61,28 +136,16 @@ def probe():
     if os.environ.get("SNAP") and subprocess.run(
         ["snapctl", "is-connected", "dvb"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
     ).returncode:
-        return {"usb": None, "ready": False, "message": "Activa el permiso de acceso DVB de Arkham TV en Ubuntu."}
-    identifier, devices = find_tuner()
-    model = USB_MODELS.get(identifier)
-    if not identifier:
-        message = "Conecta un AVerMedia A835 o A835B al USB de Ubuntu."
-    elif not devices and not all(firmware_present(name) for name in FIRMWARE_BY_MODEL[model]):
-        message = (f"Ubuntu necesita el firmware del {model}. Actualiza linux-firmware y vuelve a conectar el sintonizador."
-                   if os.environ.get("SNAP") else
-                   f"El {model} necesita firmware. Ejecuta arkham-tv --preparar y reconecta el USB.")
-    elif not devices or not all(device.exists() for device in devices):
-        message = f"Ubuntu aún no ha creado el dispositivo DVB. Reconecta el {model} y comprueba el módulo dvb_usb_af9035."
-    elif not all(os.access(device, mode) for device, mode in zip(devices, (os.R_OK | os.W_OK, os.R_OK | os.W_OK, os.R_OK))):
-        message = f"Tu usuario no tiene acceso al {model}. Comprueba el grupo video y vuelve a iniciar sesión."
-    elif not os.access(HELPER, os.X_OK) or not all(shutil.which(tool) for tool in ("ffmpeg", "ffprobe")):
-        message = "Faltan las herramientas de reproducción. Abre el ejecutable de Arkham TV para Ubuntu."
-    else:
-        return {"usb": identifier, "ready": True, "message": f"{model} conectado al controlador DVB de Ubuntu"}
-    return {"usb": identifier, "ready": False, "message": message}
+        return {"usb": None, "connected": None, "ready": False,
+                "message": "Activa el permiso de acceso DVB de Arkham TV en Ubuntu."}
+    hardware, _ = select_tuner()
+    if hardware["ready"] and not all(shutil.which(tool) for tool in ("ffmpeg", "ffprobe")):
+        hardware.update(ready=False, message="Faltan las herramientas de reproducción. Abre el ejecutable de Arkham TV para Ubuntu.")
+    return hardware
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Sintonizador DVB-T de Arkham TV para Linux")
+    parser = argparse.ArgumentParser(description="Sintonizador DVB-T y DVB-T2 de Arkham TV para Linux")
     parser.add_argument("action", choices=("scan", "stream", "guide"))
     parser.add_argument("channels", type=int, choices=range(21, 49), nargs="+")
     args = parser.parse_args()
@@ -91,9 +154,9 @@ def main():
         if len(channels) != 2 or channels[0] > channels[1]:
             parser.error("Especifica el rango UHF en orden ascendente.")
         channels = range(channels[0], channels[1] + 1)
-    _, devices = find_tuner()
+    hardware, devices = select_tuner()
     if not devices:
-        print(probe()["message"], file=sys.stderr)
+        print(hardware["message"], file=sys.stderr)
         return 1
     command = [str(HELPER), *map(str, devices)]
     if args.action == "stream":
@@ -110,7 +173,7 @@ def main():
     try:
         for channel in channels:
             print(f"UHF {channel}", file=sys.stderr, flush=True)
-            capture = subprocess.run([*command, str(channel), "8" if guide else "3"], stdout=subprocess.PIPE, timeout=15)
+            capture = subprocess.run([*command, str(channel), "8" if guide else "3"], stdout=subprocess.PIPE, timeout=18)
             if capture.returncode == 2:
                 continue
             if capture.returncode:

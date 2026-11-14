@@ -49,6 +49,8 @@ class Table(Sections):
         if len(data) < 12 or not data[5] & 1 or data[-4:] == self.last or not valid_crc(data):
             return
         self.last = data[-4:]
+        if self.catalog.on_table is not None:
+            self.catalog.on_table(data)
         if self.pid == 0 and data[0] == 0:
             for offset in range(8, len(data) - 7, 4):
                 sid = int.from_bytes(data[offset:offset + 2], "big")
@@ -74,7 +76,8 @@ class Table(Sections):
 
 
 class AudioTracks:
-    def __init__(self):
+    def __init__(self, on_table=None):
+        self.on_table = on_table
         self.tables = {0: Table(self, 0)}
         self.tracks = {}
         self.condition = Condition()

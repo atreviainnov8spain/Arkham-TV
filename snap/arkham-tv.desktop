@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Arkham TV
+Comment=Tune, watch and record terrestrial TV
+Comment[es]=Sintoniza, reproduce y graba la TDT
+Exec=arkham-tv
+Icon=${SNAP}/meta/gui/icon.png
+Terminal=false
+Categories=AudioVideo;Video;TV;
+StartupNotify=true
+StartupWMClass=arkham-tv

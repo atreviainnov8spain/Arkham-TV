@@ -2,6 +2,7 @@
 """Package a universal Arkham TV app from the official Python and FFmpeg builds."""
 import argparse
 import hashlib
+import os
 from pathlib import Path
 import plistlib
 import shutil
@@ -32,6 +33,11 @@ def sign(path):
         ["/usr/bin/codesign", "--force", "--sign", "-", path],
         check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
     )
+
+def stamp_bundle(bundle):
+    # Finder reads the outer directory's date, which a copy can inherit.
+    info = (bundle / "Contents/Info.plist").stat()
+    os.utime(bundle, ns=(info.st_atime_ns, info.st_mtime_ns))
 
 
 def make_icon(destination, size=1024):
@@ -183,6 +189,7 @@ def main():
         shutil.copy2(dependencies / "ffmpeg-8.1.2/COPYING.LGPLv2.1", licenses)
         shutil.copy2(dependencies / "ffmpeg-8.1.2.tar.xz", licenses)
         shutil.copy2(ROOT / "macos/build-ffmpeg.sh", licenses)
+        shutil.copy2(ROOT / "macos/avfoundation-audio-queue.patch", licenses)
         (licenses / "Fuentes.txt").write_text(
             "FFmpeg 8.1.2 (LGPL 2.1 o posterior) · https://ffmpeg.org/releases/\n"
             "Python 3.13.14 · https://www.python.org/downloads/release/python-31314/\n"
@@ -191,6 +198,7 @@ def main():
             "HLS.js · Contents/Resources/arkham/web/HLS-LICENSE\n", encoding="utf-8",
         )
         sign(bundle)
+        stamp_bundle(bundle)
         verify_bundle(contents)
 
         archive = work / "Arkham-TV-macOS-Universal.zip"

@@ -1,33 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>es</string>
-	<key>CFBundleExecutable</key>
-	<string>ArkhamTV</string>
-	<key>CFBundleIconFile</key>
-	<string>ArkhamTV</string>
-	<key>CFBundleIdentifier</key>
-	<string>com.arkhamtv.desktop</string>
-	<key>CFBundleName</key>
-	<string>Arkham TV</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleShortVersionString</key>
-	<string>1.8.22</string>
-	<key>CFBundleVersion</key>
-	<string>35</string>
-	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.entertainment</string>
-	<key>LSMinimumSystemVersion</key>
-	<string>12.3</string>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsLocalNetworking</key>
-		<true/>
-	</dict>
-	<key>NSHighResolutionCapable</key>
-	<true/>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>es</string>
+    <key>CFBundleExecutable</key>
+    <string>ArkhamTV</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.arkhamtv.desktop</string>
+    <key>CFBundleIconFile</key>
+    <string>ArkhamTV</string>
+    <key>CFBundleName</key>
+    <string>Arkham TV</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleVersion</key>
+    <string>56</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Arkham TV recibe el vídeo del receptor de televisión mediante la capturadora HDMI USB que elijas.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Arkham TV recibe el audio de la entrada de captura HDMI que elijas.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Arkham TV usa la red local para compartir la televisión en directo con tu móvil.</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>12.3</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.entertainment</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
 </dict>
 </plist>

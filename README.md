@@ -2,9 +2,9 @@
 
 ![Arkham TV, televisión terrestre en directo y grabaciones locales](docs/store/banner.png)
 
-Arkham TV permite **ver y grabar la TDT en abierto** en macOS y Linux. Usa un sintonizador USB con antena o un receptor de televisión conectado por HDMI a una capturadora USB. Incluye Guía TV, favoritos, perfiles de sintonización y un ecualizador de diez bandas. La interfaz está disponible en español e inglés.
+Arkham TV permite **ver y grabar la TDT en abierto** en macOS y Linux. Puedes conectar la antena a un sintonizador USB compatible o usar un receptor de televisión cuya salida HDMI vaya a una capturadora USB, como la **Elgato Cam Link 4K**. Incluye Guía TV, favoritos, perfiles de sintonización y un ecualizador de diez bandas. La interfaz está disponible en español e inglés.
 
-El proyecto está pensado para quienes tienen un **A835 o A835B** y han dejado de poder usarlo con su software habitual. Arkham TV permite seguir aprovechando el sintonizador con un portátil y una antena, también al viajar. Los perfiles guardan la lista de canales de cada lugar.
+El proyecto empezó para recuperar el uso de los sintonizadores **AVerMedia A835 y A835B**. En Linux también funciona con otros sintonizadores DVB-T o DVB-T2 que el sistema reconozca como dispositivos DVB. Los perfiles guardan la lista de canales de cada lugar.
 
 [Arkham TV en Snap Store](https://snapcraft.io/arkham-tv) · [Descargas de GitHub](https://github.com/atreviainnov8spain/Arkham-TV/releases) · [Historial de cambios](assets/changelog.json) · [Licencia](LICENSE.md)
 
@@ -70,9 +70,9 @@ Si usas Parallels, asigna la capturadora a Ubuntu en **Dispositivos → USB**. E
 
 ## Sintonizador y grabaciones
 
-| Plataforma | Modelos admitidos | Controlador |
+| Plataforma | Compatibilidad de sintonizadores | Controlador |
 | --- | --- | --- |
-| Ubuntu | A835 (`07ca:a835`, `07ca:b835`) y A835B (`07ca:1835`, `07ca:2835`, `07ca:3835`, `07ca:4835`) | `dvb_usb_af9035` del kernel |
+| Linux | Sintonizadores DVB-T o DVB-T2 que el sistema exponga en `/dev/dvb`. Entre ellos están los AVerMedia A835 (`07ca:a835`, `07ca:b835`) y A835B (`07ca:1835`, `07ca:2835`, `07ca:3835`, `07ca:4835`). | Controlador DVB del kernel correspondiente a cada modelo. Los A835 y A835B usan `dvb_usb_af9035`. |
 | macOS | A835 (`07ca:a835`) | Controlador USB del proyecto sobre IOKit |
 
 Conecta la antena al sintonizador. En el primer arranque, Arkham TV busca servicios DVB-T entre los canales UHF 21 y 48. En **Sintonizador** puedes ajustar el rango y guardar listas para distintas ubicaciones. La guía usa los horarios y las sinopsis que envía cada emisora. En Ubuntu, la recepción de DVB-T2 está disponible con un sintonizador y un controlador compatibles. Los A835 y A835B aquí descritos reciben DVB-T.
@@ -125,12 +125,12 @@ Para macOS, [macos/build-ffmpeg.sh](macos/build-ffmpeg.sh) compila para ambas ar
 ## Diagnóstico en Ubuntu
 
 ```sh
-lsusb -d 07ca:
+lsusb
 ls -l /dev/dvb/adapter*/frontend*
 arkham-tv --diagnostico
 ```
 
-Si usas Parallels, asigna el A835 a Ubuntu desde **Dispositivos → USB**. Si el USB aparece pero Ubuntu no crea el adaptador DVB, comprueba el controlador y el firmware que indique el diagnóstico. Si ves movimiento en el vúmetro pero no oyes el directo, revisa la salida seleccionada y el volumen de Arkham TV en **Configuración → Sonido** de Ubuntu.
+Si usas Parallels, asigna el sintonizador USB a Ubuntu desde **Dispositivos → USB**. Si el USB aparece pero Ubuntu no crea el adaptador DVB, comprueba el controlador y el firmware que indique el diagnóstico. Si ves movimiento en el vúmetro pero no oyes el directo, revisa la salida seleccionada y el volumen de Arkham TV en **Configuración → Sonido** de Ubuntu.
 
 ## Créditos y licencia
 

@@ -22,9 +22,11 @@ os.environ.setdefault("WEBKIT_DISABLE_DMABUF_RENDERER", "1")
 
 # Parallels exposes a virtio GPU with PCI subsystem vendor 1ab8. Its OpenGL
 # driver can create WebGL contexts that fail to draw the channel universe.
+PARALLELS_GRAPHICS = False
 for vendor in Path("/sys/class/drm").glob("renderD*/device/subsystem_vendor"):
     try:
         if vendor.read_text(encoding="ascii").strip() == "0x1ab8":
+            PARALLELS_GRAPHICS = True
             os.environ.setdefault("LIBGL_ALWAYS_SOFTWARE", "true")
             break
     except OSError:
@@ -238,7 +240,9 @@ class Desktop(Gtk.Application):
             content.register_script_message_handler("arkhamHDMIAuthorize")
             content.connect("script-message-received::arkhamHDMIAuthorize", self.authorize_hdmi)
         content.add_script(WebKit2.UserScript.new(
-            "window.arkhamLinux = true; window.arkhamPicture = true;", WebKit2.UserContentInjectedFrames.TOP_FRAME,
+            "window.arkhamLinux = true; window.arkhamPicture = true;"
+            f"window.arkhamParallels = {json.dumps(PARALLELS_GRAPHICS)};",
+            WebKit2.UserContentInjectedFrames.TOP_FRAME,
             WebKit2.UserScriptInjectionTime.START, None, None,
         ))
         self.view.connect("decide-policy", self.navigation_policy)

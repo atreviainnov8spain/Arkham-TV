@@ -244,7 +244,7 @@ Actualizando la guía|Refreshing the guide
 Buscando tus canales|Scanning for channels
 Estamos recibiendo la programación por antena.|Receiving the schedule from your antenna.
 Entrada HDMI|HDMI input
-Ajuste equilibrado para el uso diario.|Balanced settings for everyday viewing.
+Reproduce la imagen capturada sin ajustes de imagen.|Plays the captured video without picture adjustments.
 Tonos cálidos y una curva de luz pensada para ver cine con poca luz.|Warm tones and a light curve for watching films in a dim room.
 Imagen y cadencia de la emisión, sin realce añadido ni interpolación de movimiento.|The source picture and frame cadence, with no added sharpening or motion interpolation.
 Más brillo y saturación para una imagen más intensa.|Higher brightness and saturation for a more vivid picture.

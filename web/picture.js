@@ -13,7 +13,7 @@ function createPictureControls(video) {
   const renderPicture = createPictureRenderer(video, document.getElementById("picture-output"));
   const key = "arkhamtv.picture";
   const presets = {
-    standard: { values: [50, 52, 10, 53], description: "Ajuste equilibrado para el uso diario." },
+    standard: { values: [50, 50, 0, 50], description: "Reproduce la imagen capturada sin ajustes de imagen." },
     movie: { values: [46, 54, 0, 48], description: "Tonos cálidos y una curva de luz pensada para ver cine con poca luz." },
     filmmaker: { values: [50, 50, 0, 50], description: "Imagen y cadencia de la emisión, sin realce añadido ni interpolación de movimiento." },
     vivid: { values: [70, 63, 25, 78], description: "Más brillo y saturación para una imagen más intensa." },
@@ -93,7 +93,7 @@ function createPictureControls(video) {
 }
 
 function createPictureRenderer(video, canvas) {
-  if (window.arkhamLinux) return createLinuxPictureRenderer(video);
+  if (window.arkhamLinux) return createLinuxPictureRenderer(video, canvas);
 
   let settings;
   let renderer;
@@ -184,7 +184,7 @@ function createPictureRenderer(video, canvas) {
   return update;
 }
 
-function createLinuxPictureRenderer(video) {
+function createLinuxPictureRenderer(video, canvas) {
   const namespace = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(namespace, "svg");
   svg.setAttribute("aria-hidden", "true");
@@ -212,6 +212,8 @@ function createLinuxPictureRenderer(video) {
   surface.className = "linux-picture-surface";
   video.before(surface);
   surface.append(video);
+  const fullscreen = window.arkhamParallels && createFullscreenPictureRenderer(video, canvas, surface);
+
   // Filter the layer around the video so the compositor includes the video surface.
   return ({ brightness, contrast, saturation, sharpness, movie }) => {
     const effects = [];
@@ -230,8 +232,144 @@ function createLinuxPictureRenderer(video) {
       filter.replaceChildren(tones);
       effects.push("url(#linux-picture-filter)");
     }
-    surface.classList.toggle("has-picture-filter", effects.length > 0);
-    surface.style.filter = effects.join(" ");
+    if (fullscreen) {
+      fullscreen({ brightness, contrast, saturation, sharpness, movie }, effects.join(" "));
+    } else {
+      surface.classList.toggle("has-picture-filter", effects.length > 0);
+      surface.style.filter = effects.join(" ");
+    }
+  };
+}
+
+function createFullscreenPictureRenderer(video, canvas, surface) {
+  const paint = pictureCanvas(canvas, 960, 540);
+  if (!paint) return null;
+  const screen = surface.parentElement;
+  let settings, filter = "", frame = null;
+  let lastFrame = -1;
+  let lastTime = -1;
+
+  function draw() {
+    if (video.hidden || video.readyState < 2 || !video.videoWidth) return;
+    const frames = video.getVideoPlaybackQuality?.().totalVideoFrames ?? 0;
+    if (!canvas.hidden && frames === lastFrame && video.currentTime - lastTime <= .06) return;
+    paint(video, settings);
+    lastFrame = frames;
+    lastTime = video.currentTime;
+    canvas.hidden = false;
+    video.style.opacity = "0";
+  }
+
+  function stop() {
+    if (frame !== null) cancelAnimationFrame(frame);
+    frame = null;
+  }
+
+  function schedule() {
+    if (frame !== null || video.paused || video.ended) return;
+    frame = requestAnimationFrame(() => {
+      frame = null;
+      draw();
+      schedule();
+    });
+  }
+
+  function sync() {
+    const expanded = document.fullscreenElement === screen || screen.classList.contains("monitor-expanded");
+    const processing = expanded && Boolean(filter);
+    surface.classList.toggle("has-picture-filter", !processing && Boolean(filter));
+    surface.style.filter = processing ? "" : filter;
+    if (processing && !video.hidden) {
+      draw();
+      schedule();
+    } else {
+      stop();
+      canvas.hidden = true;
+      video.style.opacity = "";
+    }
+  }
+
+  document.addEventListener("fullscreenchange", sync);
+  const observe = new MutationObserver(sync);
+  observe.observe(screen, { attributes: true, attributeFilter: ["class"] });
+  observe.observe(video, { attributes: true, attributeFilter: ["hidden"] });
+  for (const event of ["loadeddata", "playing", "seeked"]) video.addEventListener(event, sync);
+  for (const event of ["pause", "ended"]) video.addEventListener(event, stop);
+  video.addEventListener("emptied", () => {
+    stop();
+    canvas.hidden = true;
+    video.style.opacity = "";
+    lastFrame = -1;
+    lastTime = -1;
+  });
+
+  return (picture, effects) => {
+    settings = picture;
+    filter = effects;
+    lastFrame = -1;
+    sync();
+  };
+}
+
+function pictureCanvas(canvas, maxWidth, maxHeight) {
+  // Read the decoded frame through Canvas 2D. Some WebKitGTK video sinks
+  // cannot share their texture with WebGL.
+  const context = canvas.getContext("2d", { alpha: false, willReadFrequently: true });
+  if (!context) return null;
+  let source;
+  const movieCurve = [
+    Uint8ClampedArray.from({ length: 256 }, (_, value) => 255 * (value / 255) ** 1.12),
+    Uint8ClampedArray.from({ length: 256 }, (_, value) => 255 * (value / 255) ** 1.13),
+    Uint8ClampedArray.from({ length: 256 }, (_, value) => 255 * (value / 255) ** 1.16),
+  ];
+  const rgb = new Uint8ClampedArray(3);
+  return (video, { brightness, contrast, saturation, sharpness, movie }) => {
+    const scale = Math.min(1, maxWidth / video.videoWidth, maxHeight / video.videoHeight);
+    const width = Math.max(1, Math.round(video.videoWidth * scale));
+    const height = Math.max(1, Math.round(video.videoHeight * scale));
+    const row = width * 4;
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+    context.drawImage(video, 0, 0, width, height);
+    const frame = context.getImageData(0, 0, width, height);
+    const pixels = frame.data;
+    if (sharpness) {
+      if (source?.length !== pixels.length) source = new Uint8ClampedArray(pixels.length);
+      source.set(pixels);
+    }
+    const gain = contrast * brightness;
+    const offset = 127.5 * (1 - contrast) * brightness;
+    for (let y = 0; y < height; y++) {
+      const above = y ? -row : 0;
+      const below = y + 1 < height ? row : 0;
+      for (let x = 0; x < width; x++) {
+        const pixel = y * row + x * 4;
+        const left = x ? -4 : 0;
+        const right = x + 1 < width ? 4 : 0;
+        let r = pixels[pixel], g = pixels[pixel + 1], b = pixels[pixel + 2];
+        if (sharpness) {
+          for (let channel = 0; channel < 3; channel++) {
+            const index = pixel + channel;
+            const neighbors = source[index + above] + source[index + below] +
+              source[index + left] + source[index + right];
+            pixels[index] = source[index] + sharpness * (source[index] - neighbors / 4);
+          }
+          r = pixels[pixel];
+          g = pixels[pixel + 1];
+          b = pixels[pixel + 2];
+        }
+        const gray = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        rgb[0] = (gray + saturation * (r - gray)) * gain + offset;
+        rgb[1] = (gray + saturation * (g - gray)) * gain + offset;
+        rgb[2] = (gray + saturation * (b - gray)) * gain + offset;
+        for (let channel = 0; channel < 3; channel++) {
+          pixels[pixel + channel] = movie ? movieCurve[channel][rgb[channel]] : rgb[channel];
+        }
+      }
+    }
+    context.putImageData(frame, 0, 0);
   };
 }
 

@@ -6,11 +6,11 @@ Arkham TV permite **ver y grabar la TDT en abierto** en macOS y Linux. Puedes co
 
 El proyecto empezó para recuperar el uso de los sintonizadores **AVerMedia A835 y A835B**. En Linux también funciona con otros sintonizadores DVB-T o DVB-T2 que el sistema reconozca como dispositivos DVB. Los perfiles guardan la lista de canales de cada lugar.
 
-[Arkham TV en Snap Store](https://snapcraft.io/arkham-tv) · [Descargar Arkham TV 1.12.1](https://github.com/atreviainnov8spain/Arkham-TV/releases/tag/v1.12.1) · [Historial de cambios](docs/CHANGELOG.md) · [Licencia](LICENSE.md)
+[Arkham TV en Snap Store](https://snapcraft.io/arkham-tv) · [Descargar Arkham TV 1.12.1](https://github.com/atreviainnov8spain/Arkham-TV/releases/tag/v1.12.1-r2) · [Historial de cambios](docs/CHANGELOG.md) · [Licencia](LICENSE.md)
 
 ## Novedades de la 1.12.1
 
-**Solsticio en Arkham:** detalles navideños de Cthulhu adaptados al tema, visibles cada año del **20 de noviembre al 8 de enero**, ambos incluidos. Son elementos estáticos del marco y del menú; se ocultan si falta espacio y en la vista del reproductor a pantalla completa.
+**Solsticio en Arkham · revisión 2:** adornos ilustrados de Cthulhu con pino, luces cálidas y tentáculos con volumen, visibles cada año del **20 de noviembre al 8 de enero**, ambos incluidos. Son elementos estáticos del marco y del menú; se ocultan si falta espacio y en la vista del reproductor a pantalla completa.
 
 ![Solsticio en Arkham adaptado a la interfaz actual](docs/propuestas/navidad/Solsticio-en-Arkham.png)
 
@@ -23,7 +23,7 @@ El proyecto empezó para recuperar el uso de los sintonizadores **AVerMedia A835
 - **Biblioteca más clara:** distintivos **DIRECTO** y **GRABACIÓN**, título, fecha y modelo utilizado. Puedes limpiar el panel tras finalizar conservando la sesión y el audio pendiente.
 - **Reproducción prioritaria:** cola local de audio pendiente, mejoras de protección en Linux y motores AVX2 para procesadores Intel/AMD compatibles. macOS conserva Whisper con Metal.
 
-Las descargas incluyen **macOS Universal**, **Ubuntu ARM64** y **Ubuntu Intel/AMD**, además de los Snaps y ejecutables portátiles de Linux. [Ejecutables y comprobaciones SHA-256](https://github.com/atreviainnov8spain/Arkham-TV/releases/tag/v1.12.1)
+Las descargas incluyen **macOS Universal**, **Ubuntu ARM64** y **Ubuntu Intel/AMD**, además de los Snaps y ejecutables portátiles de Linux. [Ejecutables y comprobaciones SHA-256](https://github.com/atreviainnov8spain/Arkham-TV/releases/tag/v1.12.1-r2)
 
 ## Novedades de la 1.10
 
@@ -57,7 +57,7 @@ Para usar un sintonizador de antena directa en una instalación nueva, habilita 
 
 ### Ubuntu Desktop con paquete .deb
 
-Descarga el paquete **1.12.1** de tu arquitectura. [Ubuntu AMD64 (Intel y AMD de 64 bits)](https://github.com/atreviainnov8spain/Arkham-TV/releases/download/v1.12.1/Arkham-TV-1.12.1-Ubuntu-Intel-x86_64.deb) · [Ubuntu ARM64](https://github.com/atreviainnov8spain/Arkham-TV/releases/download/v1.12.1/Arkham-TV-1.12.1-Ubuntu-ARM64.deb)
+Descarga el paquete **1.12.1** de tu arquitectura. [Ubuntu AMD64 (Intel y AMD de 64 bits)](https://github.com/atreviainnov8spain/Arkham-TV/releases/download/v1.12.1-r2/Arkham-TV-1.12.1-Ubuntu-Intel-x86_64.deb) · [Ubuntu ARM64](https://github.com/atreviainnov8spain/Arkham-TV/releases/download/v1.12.1-r2/Arkham-TV-1.12.1-Ubuntu-ARM64.deb)
 
 Abre el paquete de tu arquitectura en el **Centro de aplicaciones** de Ubuntu. También puedes instalar el archivo con `sudo apt install ./nombre-del-paquete.deb` desde la carpeta de descargas. A continuación, abre **Arkham TV** desde el menú de aplicaciones. El paquete incluye el lector DVB, FFmpeg y FFprobe. Ubuntu instala las dependencias del escritorio.
 
@@ -76,7 +76,7 @@ El paquete de prueba incluye acceso a dispositivos para que Arkham TV use `/dev/
 
 ### macOS
 
-Descarga el ZIP universal de **Arkham TV 1.12.1**, descomprímelo y abre **Arkham TV.app**. Requiere macOS 12.3 o posterior y funciona en Intel y Apple Silicon. La app incluye Python, los códecs y el lector USB. [macOS Universal](https://github.com/atreviainnov8spain/Arkham-TV/releases/download/v1.12.1/Arkham-TV-1.12.1-macOS-Universal.zip)
+Descarga el ZIP universal de **Arkham TV 1.12.1**, descomprímelo y abre **Arkham TV.app**. Requiere macOS 12.3 o posterior y funciona en Intel y Apple Silicon. La app incluye Python, los códecs y el lector USB. [macOS Universal](https://github.com/atreviainnov8spain/Arkham-TV/releases/download/v1.12.1-r2/Arkham-TV-1.12.1-macOS-Universal.zip)
 
 ## Transcripción e IA local
 

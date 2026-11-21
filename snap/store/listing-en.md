@@ -6,7 +6,7 @@ Watch and record free-to-air TV on Linux with a compatible USB DVB-T/T2 tuner or
 
 **NEW IN 1.12.1 · SOLSTICE IN ARKHAM**
 
-Seasonal Cthulhu details match your colour theme from 20 November through 8 January each year. Static artwork stays in the frame and navigation, outside the video and controls; it adapts to the space available.
+Illustrated pine garlands, warm lights and Cthulhu ornaments appear from 20 November through 8 January each year. Static artwork stays in the frame and navigation, outside the video and controls; it adapts to the space available.
 
 **INCLUDED FROM 1.12**
 

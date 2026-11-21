@@ -2,6 +2,8 @@
 
 ## 1.12.1 · Solsticio en Arkham
 
+Revisión 2: recursos ilustrados fieles a la propuesta aprobada, con transparencias, volumen, pino y luces cálidas.
+
 - Emblema de Cthulhu navideño, guirnalda y árbol de tentáculos adaptados a cada tema.
 - Activación automática anual del 20 de noviembre al 8 de enero inclusive, según la fecha local.
 - Elementos estáticos sin interacción, fuera del vídeo y de sus controles. El árbol aparece solo si queda espacio libre.

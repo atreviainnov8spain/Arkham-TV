@@ -4,7 +4,7 @@
   "changes": [
     [
       "interfaz",
-      "Detalle navideño de Cthulhu integrado en el marco y el menú, adaptado a la paleta de color."
+      "Adornos ilustrados de Cthulhu fieles a la propuesta: guirnalda de pino con luces cálidas, emblema con gorro de terciopelo y árbol de tentáculos con volumen. Recursos transparentes estáticos, integrados en todas las paletas."
     ],
     [
       "interfaz",
@@ -17,7 +17,7 @@
   ],
   "english": [
     "Solstice in Arkham",
-    "Seasonal Cthulhu details in the frame and navigation, matching the selected colour palette.",
+    "Illustrated Cthulhu ornaments matching the approved design: pine garland with warm lights, velvet Santa hat emblem and a dimensional tentacle tree. Static transparent artwork works with every colour palette.",
     "Automatically active from 20 November through 8 January, inclusive, using the local date. Removed on 9 January without restarting the app.",
     "Static decoration outside video and controls. Adapts to collapsed navigation and small windows; the tree appears only when space is available."
   ]

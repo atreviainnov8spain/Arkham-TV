@@ -4,11 +4,11 @@ const vm = require('node:vm');
 const source = fs.readFileSync('web/seasonal.js', 'utf8');
 const classes = new Set(), nodes = [], listeners = {}, timers = new Map();
 let now = new Date("2026-11-19T12:00:00").getTime(), sequence = 0, watching = false;
-const list = {toggle:(name,on)=>on?classes.add(name):classes.delete(name),remove:name=>classes.delete(name)};
+const list = {toggle:(name,on)=>on?classes.add(name):classes.delete(name),remove:(...names)=>names.forEach(name=>classes.delete(name)),add:name=>classes.add(name)};
 const parent = {append:node=>nodes.push(node),getBoundingClientRect:()=>({top:900,bottom:500})};
 const secondary = {...parent,previousElementSibling:parent,parentElement:parent};
 const document = {hidden:false,documentElement:{classList:list},querySelector:s=>s==='.nav-secondary'?secondary:parent,
- createElement:()=>({setAttribute(){},remove(){nodes.splice(nodes.indexOf(this),1);}}),addEventListener:(type,fn)=>listeners[type]=fn};
+ createElement:()=>({setAttribute(){},append(){},addEventListener(){},remove(){nodes.splice(nodes.indexOf(this),1);}}),addEventListener:(type,fn)=>listeners[type]=fn};
 class Clock extends Date {constructor(...args){super(...(args.length?args:[now]));}}
 vm.runInNewContext(source,{document,Date:Clock,window:{addEventListener:(type,fn)=>listeners[type]=fn},
  ResizeObserver:class{constructor(){}observe(){watching=true;}disconnect(){watching=false;}},

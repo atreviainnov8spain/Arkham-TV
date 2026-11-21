@@ -1076,6 +1076,7 @@ STATIC_PATHS = {"/": WEB / "index.html", "/style.css": WEB / "style.css", "/tv.j
                 "/qrcode.js": WEB / "qrcode.js", "/mobile-share.js": WEB / "mobile-share.js",
                 "/mobile-share.css": WEB / "mobile-share.css",
                 "/seasonal.js": WEB / "seasonal.js", "/seasonal.css": WEB / "seasonal.css",
+                **{"/seasonal/" + name: WEB / "seasonal" / name for name in ("tree.png", "garland.png", "emblem.png")},
                 "/assets/canales/catalogo.js": CHANNEL_LOGOS / "catalogo.js",
                 "/assets/fonts/InterVariable.woff2": ROOT / "assets" / "fonts" / "InterVariable.woff2",
                 "/assets/fonts/GeistMono-Variable.ttf": ROOT / "assets" / "fonts" / "GeistMono-Variable.ttf",

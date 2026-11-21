@@ -1,0 +1,39 @@
+{
+  "version": "1.12",
+  "title": "Transcripciones más claras y ordenadas",
+  "changes": [
+    [
+      "interfaz",
+      "Explora el Universo de canales en el nuevo mapa orbital. Selecciona una frecuencia para ver sus canales y sigue la recepción y la relación señal/ruido del múltiplex sintonizado."
+    ],
+    [
+      "interfaz",
+      "Lee la transcripción en párrafos continuos. Las marcas de tiempo son opcionales y las citas siguen llevando al fragmento original."
+    ],
+    [
+      "grabaciones",
+      "Distingue las transcripciones de DIRECTO y GRABACIÓN mediante sus distintivos, iconos y datos de origen."
+    ],
+    [
+      "interfaz",
+      "Limpia el panel tras finalizar con el icono de borrado. La sesión queda guardada y el audio pendiente sigue procesándose."
+    ],
+    [
+      "grabaciones",
+      "Activa la separación local de voces para las grabaciones y renombra cada interlocutor. No se aplica a la transcripción en directo."
+    ],
+    [
+      "compatibilidad",
+      "Descarga Parakeet TDT v3 o Qwen3-ASR 0.6B como modelos experimentales de voz. Se conservan Whisper con Metal y los controles de reproducción de la versión anterior."
+    ]
+  ],
+  "english": [
+    "Clearer and better organized transcripts",
+    "Explore the channel universe on the new orbital map. Select a frequency to see its channels and follow reception and carrier-to-noise readings for the tuned multiplex.",
+    "Read transcripts as continuous paragraphs. Timestamps are optional and citations still open the original excerpt.",
+    "Distinguish LIVE and RECORDING transcripts through their badges, icons and source details.",
+    "Clear the panel after finishing with the eraser icon. The session is saved and pending audio continues to be processed.",
+    "Enable local speaker separation for recordings and rename each speaker. It does not affect live transcription.",
+    "Download Parakeet TDT v3 or Qwen3-ASR 0.6B as experimental speech models. Whisper with Metal and existing playback controls are preserved."
+  ]
+}

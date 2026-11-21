@@ -47,6 +47,24 @@ private func describeCaptureInputs() throws {
     FileHandle.standardOutput.write(try JSONSerialization.data(withJSONObject: result))
 }
 
+private func writeRecordingThumbnail(_ path: String) throws {
+    let asset = AVURLAsset(url: URL(fileURLWithPath: path))
+    let generator = AVAssetImageGenerator(asset: asset)
+    generator.appliesPreferredTrackTransform = true
+    generator.maximumSize = CGSize(width: 640, height: 360)
+    generator.requestedTimeToleranceBefore = CMTime(seconds: 1, preferredTimescale: 600)
+    generator.requestedTimeToleranceAfter = generator.requestedTimeToleranceBefore
+    let duration = asset.duration.seconds
+    // Skip the opening frames. Short clips still get a frame from within the clip.
+    let seconds = duration.isFinite && duration > 0 ? min(120, duration * 0.42) : 0
+    let frame = (try? generator.copyCGImage(at: CMTime(seconds: seconds, preferredTimescale: 600), actualTime: nil))
+        ?? (try? generator.copyCGImage(at: .zero, actualTime: nil))
+    guard let frame,
+          let jpeg = NSBitmapImageRep(cgImage: frame).representation(using: .jpeg, properties: [.compressionFactor: 0.84])
+    else { throw CocoaError(.fileReadCorruptFile) }
+    FileHandle.standardOutput.write(jpeg)
+}
+
 private let desktopPort = 8766
 private let windowTitleItem = NSToolbarItem.Identifier("ArkhamTV.windowTitle")
 
@@ -68,8 +86,14 @@ final class ArkhamTV: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavig
     }
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard message.name == "arkhamLanguage", message.frameInfo.isMainFrame,
-              message.frameInfo.securityOrigin.host == "127.0.0.1",
+        guard message.frameInfo.isMainFrame, message.frameInfo.securityOrigin.host == "127.0.0.1" else { return }
+        if message.name == "arkhamAIExport", message.frameInfo.securityOrigin.port == address?.port,
+           let export = message.body as? [String: String], let format = export["format"],
+           let text = export["text"], ["md", "txt"].contains(format), text.utf8.count <= 12 * 1024 * 1024 {
+            saveTranscript(text, format: format)
+            return
+        }
+        guard message.name == "arkhamLanguage",
               let value = message.body as? String, ["es", "en"].contains(value), value != language else { return }
         language = value
         UserDefaults.standard.set(value, forKey: "arkhamtv.language")
@@ -82,6 +106,7 @@ final class ArkhamTV: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavig
         settings.mediaTypesRequiringUserActionForPlayback = []
         settings.preferences.isElementFullscreenEnabled = true
         settings.userContentController.add(self, name: "arkhamLanguage")
+        settings.userContentController.add(self, name: "arkhamAIExport")
         settings.userContentController.addUserScript(WKUserScript(
             source: "window.arkhamNative = true; window.arkhamPicture = true;",
             injectionTime: .atDocumentStart,
@@ -199,6 +224,7 @@ final class ArkhamTV: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavig
             "ARKHAM_FIRMWARE": resources.appendingPathComponent("dvb-usb-af9035-02.fw").path,
             "ARKHAM_VIDEOTOOLBOX": "1",
             "ARKHAM_CAPTURE_HOST": Bundle.main.executableURL!.path,
+            "ARKHAM_AI_HELPERS": tools.path,
         ]
         service.standardOutput = log
         service.standardError = log
@@ -367,6 +393,27 @@ final class ArkhamTV: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavig
         }
     }
 
+    private func saveTranscript(_ text: String, format: String) {
+        guard window.attachedSheet == nil else { return }
+        let picker = NSSavePanel()
+        picker.title = tr("Exportar transcripción", "Export transcript")
+        picker.nameFieldStringValue = tr("Transcripción", "Transcript") + "." + format
+        picker.canCreateDirectories = true
+        picker.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK, let file = picker.url else { return }
+            let result: String
+            do {
+                try text.write(to: file, atomically: true, encoding: .utf8)
+                result = "saved"
+            } catch {
+                result = "error"
+            }
+            self?.webView.callAsyncJavaScript(
+                "window.dispatchEvent(new CustomEvent('arkham-ai-export', { detail: result }));",
+                arguments: ["result": result], in: nil, in: .page, completionHandler: nil)
+        }
+    }
+
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
                  decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         let url = navigationAction.request.url
@@ -449,6 +496,10 @@ final class ArkhamTV: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavig
 if CommandLine.arguments == [CommandLine.arguments[0], "--capture-devices"] {
     do { try describeCaptureInputs(); exit(0) }
     catch { fputs("\(error)\n", stderr); exit(1) }
+}
+if CommandLine.arguments.count == 3, CommandLine.arguments[1] == "--recording-thumbnail" {
+    do { try writeRecordingThumbnail(CommandLine.arguments[2]); exit(0) }
+    catch { exit(1) }
 }
 
 let app = NSApplication.shared

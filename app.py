@@ -3,6 +3,7 @@ import argparse
 import ctypes
 import errno
 import json
+import math
 import os
 import platform
 import re
@@ -26,6 +27,7 @@ from native.channels import clean_channel_name
 from native.changelog import load_changelog, render_changelog
 from native.devices import USB_MODELS
 from native.guide import Guide
+from native.local_ai import AIError, LocalAI
 from native import hdmi, movies
 from native.recordings import RecordingError, Recordings, RECORDING_QUALITIES
 from native.audio_tracks import match_track, primary_track
@@ -179,6 +181,11 @@ class TV:
         except (OSError, ValueError):
             gains = None
         self.equalizer = gains if valid_gains(gains) else FLAT.copy()
+        self.equalizer_enabled_path = data / "equalizer-enabled.json"
+        try:
+            self.equalizer_enabled = json.loads(self.equalizer_enabled_path.read_text(encoding="utf-8")) is not False
+        except (OSError, ValueError):
+            self.equalizer_enabled = True
         self.audio_delays_path = data / "audio-delays.json"
         try:
             delays = json.loads(self.audio_delays_path.read_text(encoding="utf-8"))
@@ -203,6 +210,7 @@ class TV:
         self.autoplay_pending = False
         self.autoplay_channels = None
         self.mobile = MobileSession(self, WEB, CONTENT_TYPES, TunerError)
+        self.ai = LocalAI.for_desktop(self)
 
     def status(self):
         hardware = probe()
@@ -249,6 +257,7 @@ class TV:
                     "autoplayPending": self.autoplay_pending, "mobileSharing": bool(self.mobile.status()["url"]),
                     "audioDelays": dict(self.audio_delays),
                     "equalizer": self.equalizer,
+                    "equalizerEnabled": self.equalizer_enabled,
                     "channels": list(self.channels.values()),
                     "recordingFolder": str(self.recordings.folder), "recordings": self.recordings.jobs,
                     "recordingElapsed": time.monotonic() - self.recording["started"]
@@ -574,7 +583,8 @@ class TV:
             folder = Path(tempfile.mkdtemp(prefix="tv-", dir=self.data))
             playlist = folder / "live.m3u8"
             delay = self.audio_delays.get(channel_id, 0)
-            audio_filter = audio_chain(self.equalizer, delay, continuous=bool(source))
+            gains = self.equalizer if self.equalizer_enabled else FLAT
+            audio_filter = audio_chain(gains, delay, continuous=bool(source))
             video_options = []
             if source and hdmi.linux_enabled():
                 from native.hdmi_linux import output_rate
@@ -690,7 +700,18 @@ class TV:
             pending.write_text(json.dumps(gains), encoding="utf-8")
             pending.replace(self.equalizer_path)
             self.equalizer = gains
-            if self.stream:
+            if self.stream and self.equalizer_enabled:
+                self.start_stream(self.stream["channel"], source=self.stream.get("hdmi"))
+
+    def set_equalizer_enabled(self, enabled):
+        with self.lock:
+            if self.equalizer_enabled == enabled:
+                return
+            pending = self.equalizer_enabled_path.with_suffix(".tmp")
+            pending.write_text(json.dumps(enabled), encoding="utf-8")
+            pending.replace(self.equalizer_enabled_path)
+            self.equalizer_enabled = enabled
+            if self.stream and any(self.equalizer):
                 self.start_stream(self.stream["channel"], source=self.stream.get("hdmi"))
 
     def set_audio_delay(self, channel_id, delay):
@@ -1021,6 +1042,8 @@ class TV:
                 print(error, flush=True)
 
     def close(self):
+        if self.ai:
+            self.ai.close()
         self.mobile.stop()
         with self.lock:
             self.stop_stream()
@@ -1069,7 +1092,38 @@ if SIGNAL_ANALYSIS:
     )})
 
 
+def linux_recording_thumbnail(path):
+    # Seek before decoding so long recordings cost about as much as short ones.
+    seconds = 0
+    try:
+        duration = float(subprocess.check_output(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "default=noprint_wrappers=1:nokey=1", str(path)],
+            stderr=subprocess.DEVNULL, env=ENV, timeout=3,
+        ))
+        if math.isfinite(duration) and duration > 0:
+            seconds = min(120, duration * .42)
+    except (ValueError, subprocess.SubprocessError):
+        pass
+    for position in (seconds, 0) if seconds else (0,):
+        result = subprocess.run(
+            ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
+             "-filter_threads", "1", "-threads", "2", "-ss", f"{position:.3f}", "-i", str(path),
+             "-map", "0:v:0", "-frames:v", "1", "-vf", "scale=640:360:force_original_aspect_ratio=decrease",
+             "-c:v", "mjpeg", "-threads", "1", "-q:v", "4", "-f", "image2pipe", "pipe:1"],
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=ENV, timeout=8,
+        )
+        if result.returncode == 0 and result.stdout.startswith(b"\xff\xd8"):
+            return result.stdout
+    raise ValueError("No se pudo extraer un fotograma de la grabación.")
+
+
 def handler(tv):
+    capture_host = os.environ.get("ARKHAM_CAPTURE_HOST") if sys.platform == "darwin" else None
+    linux_thumbnails = sys.platform.startswith("linux")
+    thumbnail_worker = threading.Lock()
+    ai_assets = {"/ai.js": WEB / "ai.js", "/ai.css": WEB / "ai.css", "/vendor/d3.min.js": WEB / "vendor/d3.min.js"}
+
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, fmt, *args):
             if len(args) > 1 and str(args[1]) not in {"200", "204", "206", "404"}:
@@ -1131,6 +1185,36 @@ def handler(tv):
                 except (BrokenPipeError, ConnectionResetError):
                     pass
 
+        def recording_thumbnail(self, identifier):
+            # Decode one image at a time, outside the tuner lock.
+            with thumbnail_worker:
+                with tv.lock:
+                    path, cached = tv.recordings.thumbnail_source(identifier)
+                try:
+                    return cached.read_bytes()
+                except FileNotFoundError:
+                    pass
+                if linux_thumbnails:
+                    image = linux_recording_thumbnail(path)
+                else:
+                    image = subprocess.run([capture_host, "--recording-thumbnail", str(path)],
+                                           stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                           check=True, timeout=12).stdout
+                if not image.startswith(b"\xff\xd8"):
+                    raise ValueError("La miniatura no es un JPEG.")
+                with tv.lock:
+                    if tv.recordings.thumbnail_source(identifier)[1] != cached:
+                        raise FileNotFoundError
+                    try:
+                        cached.parent.mkdir(mode=0o700, exist_ok=True)
+                        pending = cached.with_suffix(".tmp")
+                        pending.write_bytes(image)
+                        pending.replace(cached)
+                        tv.recordings.clear_thumbnails(identifier, keep=cached)
+                    except OSError:
+                        pass
+                return image
+
         def send_json(self, data, status=HTTPStatus.OK):
             self.send_bytes(json.dumps(data, ensure_ascii=False).encode(), "application/json", status)
 
@@ -1147,9 +1231,27 @@ def handler(tv):
                 return
             url = urlsplit(self.path)
             path = url.path
-            recording = re.fullmatch(r"/grabacion/([0-9a-f]{16})\.mp4", path)
+            if path == "/api/ai":
+                if tv.ai:
+                    query = parse_qs(url.query)
+                    identifier = query.get("id", [""])[0]
+                    revision = query.get("revision", [""])[0]
+                    self.send_json(tv.ai.state(identifier, revision))
+                else:
+                    self.send_json({"error": "No disponible."}, HTTPStatus.NOT_FOUND)
+                return
+            recording = re.fullmatch(r"/grabacion/([0-9a-f]{16})\.(mp4|jpg)", path)
             if recording:
-                self.send_recording(recording[1])
+                if recording[2] == "mp4":
+                    self.send_recording(recording[1])
+                    return
+                if capture_host or linux_thumbnails:
+                    try:
+                        self.send_bytes(self.recording_thumbnail(recording[1]), "image/jpeg")
+                        return
+                    except (OSError, ValueError, RecordingError, subprocess.SubprocessError):
+                        pass
+                self.send_json({"error": "No hay una miniatura disponible."}, HTTPStatus.NOT_FOUND)
                 return
             if path == "/api/status":
                 self.send_json(tv.status())
@@ -1216,7 +1318,7 @@ def handler(tv):
                     channels = tuple(tv.channels)
                 self.send_json(tv.guide.schedule(channels, start, end))
                 return
-            file = STATIC_PATHS.get(path)
+            file = STATIC_PATHS.get(path) or (ai_assets.get(path) if tv.ai else None)
             logo = re.fullmatch(r"/assets/canales/([a-z0-9-]+\.png)", path)
             if logo:
                 file = CHANNEL_LOGOS / logo[1]
@@ -1238,6 +1340,8 @@ def handler(tv):
                     if path == "/":
                         body = body.replace(b"{{APP_VERSION}}", APP_VERSION.encode("ascii"))
                         body = body.replace(b"{{CHANGELOG_ENTRIES}}", CHANGELOG)
+                        if tv.ai:
+                            body = body.replace(b"<!-- LOCAL_AI_ASSETS -->", b'<link rel="stylesheet" href="/ai.css">\n<script src="/ai.js" defer></script>')
                         if SIGNAL_ANALYSIS:
                             body = body.replace(b"<!-- SIGNAL_ASSETS -->",
                                                 b'<link rel="stylesheet" href="/signal-analysis.css">\n'
@@ -1262,7 +1366,46 @@ def handler(tv):
                 if not isinstance(data, dict):
                     raise ValueError
                 path = urlsplit(self.path).path
-                if path == "/api/mobile-start":
+                if path.startswith("/api/ai/") and tv.ai:
+                    action = path.removeprefix("/api/ai/")
+                    language = "en" if data.get("language") == "en" else "es"
+                    identifier = data.get("id")
+                    result = None
+                    if action == "start":
+                        result = tv.ai.start()
+                    elif action == "start-recording" and isinstance(identifier, str):
+                        result = tv.ai.start_recording(identifier)
+                    elif action == "cancel-recording" and isinstance(identifier, str):
+                        tv.ai.cancel_recording(identifier)
+                    elif action == "diarize" and isinstance(identifier, str):
+                        result = tv.ai.diarize_session(identifier)
+                    elif action == "speaker-enable" and type(data.get("enabled")) is bool:
+                        tv.ai.enable_speakers(data["enabled"])
+                    elif action == "rename-speaker" and isinstance(identifier, str):
+                        tv.ai.rename_speaker(identifier, data.get("speaker"), data.get("name"))
+                    elif action in {"pause", "resume", "finish"}:
+                        result = tv.ai.session_action(action)
+                    elif action == "archive" and isinstance(identifier, str):
+                        result = tv.ai.archive_session(identifier)
+                    elif action == "delete" and isinstance(identifier, str):
+                        tv.ai.delete_session(identifier)
+                    elif action in {"download", "cancel", "remove", "activate"} and isinstance(data.get("model"), str):
+                        tv.ai.model_action(action, data["model"])
+                    elif action == "health" and type(data.get("healthy")) is bool:
+                        tv.ai.health(data["healthy"])
+                    elif action == "ask" and isinstance(identifier, str) and isinstance(data.get("kind"), str):
+                        tv.ai.ask(identifier, data["kind"], data.get("question"), language)
+                    elif action == "cancel-answer":
+                        tv.ai.cancel_answer()
+                    elif action == "export" and isinstance(identifier, str) and isinstance(data.get("format"), str):
+                        result = {"text": tv.ai.export(identifier, data["format"], data.get("include") is True, language,
+                                  timestamps=data.get("timestamps", True) is not False)}
+                    else:
+                        self.send_json({"error": "Acción desconocida."}, HTTPStatus.NOT_FOUND)
+                        return
+                    self.send_json(result or {"ok": True})
+                    return
+                elif path == "/api/mobile-start":
                     address = data.get("address")
                     if address is not None and not isinstance(address, str):
                         raise ValueError
@@ -1392,6 +1535,11 @@ def handler(tv):
                         self.send_json({"error": "Usa diez valores enteros entre −12 y +12 dB."}, HTTPStatus.BAD_REQUEST)
                         return
                     tv.set_equalizer(gains)
+                elif path == "/api/equalizer-enabled":
+                    enabled = data.get("enabled")
+                    if type(enabled) is not bool:
+                        raise ValueError
+                    tv.set_equalizer_enabled(enabled)
                 elif path == "/api/audio-delay":
                     channel, delay = data.get("id"), data.get("ms")
                     if not isinstance(channel, str) or type(delay) is not int or abs(delay) > MAX_AUDIO_DELAY_MS:
@@ -1406,7 +1554,7 @@ def handler(tv):
                 self.send_json({"ok": True})
             except ValueError:
                 self.send_json({"error": "Datos no válidos. El rango UHF es del 21 al 48."}, HTTPStatus.BAD_REQUEST)
-            except TunerError as error:
+            except (TunerError, AIError) as error:
                 self.send_json({"error": str(error)}, HTTPStatus.CONFLICT)
             except RecordingError as error:
                 self.send_json({"error": str(error)}, HTTPStatus.CONFLICT)

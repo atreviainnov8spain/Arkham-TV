@@ -22,7 +22,7 @@
 .signal-world[data-focus] { background: radial-gradient(ellipse at center, #223e56, #0d2337 54%, #07121e 85%); }
 .signal-space, .signal-links, .signal-fallback, .signal-planets, .signal-satellites { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .signal-space { z-index: 2; }
-.signal-space canvas { display: block; }
+.signal-space canvas { display: block; width: 100%; height: 100%; }
 .signal-planets { z-index: 3; }
 .signal-satellites { z-index: 4; }
 .signal-fallback { color: #c3e8eb; }
@@ -251,3 +251,76 @@
   .signal-rail-collapsed .rail-foot { justify-content: center; }
   .mini-mode.signal-rail-available .app { display: block; }
 }
+
+/* Orbital map and multiplex inspector inherit the typography and palette of Análisis de señal. */
+.atlas-board { display:grid; grid-template-columns:minmax(0,1fr) clamp(205px,22%,315px); border-block:1px solid var(--line); }
+.atlas-board:fullscreen { background:var(--panel); height:100%; }
+.atlas-board:fullscreen .signal-world { height:100%; }
+.atlas-board .signal-world { min-width:0; height:clamp(390px,43vw,620px); touch-action:pan-y; }
+.atlas-maphead,.atlas-legend { position:absolute; z-index:6; left:15px; right:15px; display:flex; align-items:center; pointer-events:none; }
+.atlas-maphead { justify-content:space-between; top:13px; gap:5px; }
+.atlas-maphead > span { display:flex; align-items:center; gap:7px; font-size:.77rem; }
+.atlas-maphead > span svg { color:#96d6c7; }
+.atlas-maphead svg { width:16px; height:16px; }
+.atlas-controls { display:flex; gap:1px; padding:2px; border:1px solid #354a59; border-radius:7px; background:#0b1826ea; pointer-events:auto; }
+.atlas-controls button { display:grid; place-items:center; padding:0; width:28px; height:27px; background:transparent; border:0; color:#cedee5; border-radius:4px; }
+.atlas-controls button:hover { background:#263e4b; }
+.atlas-controls button:disabled { opacity:.4; }
+.atlas-board .signal-planet { min-width:0; min-height:0; overflow:visible; border-radius:50%; }
+.atlas-board .signal-planet strong,.atlas-board .signal-planet small { position:absolute; top:calc(100% + 4px); left:50%; transform:translateX(-50%); font-family:inherit; }
+.atlas-board .signal-planet strong { font-size:.76rem; font-weight:680; }
+.atlas-board .signal-planet small { top:calc(100% + 20px); font-size:.64rem; color:#b9c9d4; font-variant-numeric:tabular-nums; }
+.atlas-board .signal-planet[aria-pressed=true] strong { color:#ffd9a5; }
+.atlas-board .signal-planet[aria-pressed=true] { outline:1px solid #e6bc7caa; outline-offset:3px; }
+.atlas-board .iv-3d .signal-planet[aria-pressed=true] { outline:none; }
+.atlas-board .signal-planet:focus-visible { outline:2px solid white; outline-offset:5px; }
+.atlas-board .signal-satellite i { width:5px;height:5px; }
+.atlas-board .signal-world[data-dots] .signal-satellite i { box-shadow:0 0 5px var(--planet-color); }
+.atlas-board .signal-world[data-dots] .signal-satellite:hover span,
+.atlas-board .signal-world[data-dots] .signal-satellite:focus-visible span { display:block; position:absolute; bottom:100%; left:50%; transform:translateX(-50%); background:#10212fee; color:#fff; border:1px solid #496373; padding:3px 6px; border-radius:4px; }
+.atlas-board .signal-world[data-dots] .signal-satellite:hover,.atlas-board .signal-satellite:focus-visible { z-index:1; }
+.atlas-board .signal-map-caption { left:auto;right:13px;bottom:12px;font-size:.62rem;letter-spacing:.02em;text-transform:none; }
+.atlas-board .signal-antenna-caption { top:auto; transform:translateX(-50%); white-space:nowrap; font-size:.55rem; }
+.atlas-legend { bottom:13px;gap:11px;font-size:.61rem;color:#c4d3dc;right:auto; }
+.atlas-legend span { display:inline-flex;gap:5px;align-items:center; }
+.atlas-legend span:before { content:""; width:7px; height:7px; border:1px solid currentColor; border-radius:50%; }
+.atlas-legend span:nth-child(2):before { width:3px;height:3px;background:currentColor; }
+.atlas-legend span:nth-child(3):before { width:14px;height:2px;border:0;background:#efbe7d; }
+.signal-space { z-index:0; }
+.signal-links { z-index:1; }
+.signal-fallback { z-index:1; }
+.atlas-board .signal-links path.signal-wire { stroke:#ffd28e;stroke-width:1.25px; }
+.atlas-board .signal-links path.signal-bank { stroke:#edb46b;stroke-width:5px; }
+.atlas-board .signal-links path.atlas-moon-orbit { stroke:#8ea6b555; }
+.atlas-board .signal-electric-pulse { width:5px;height:5px; background:#fff2c9; border:0; box-shadow:0 0 7px 2px #f8bd78; }
+.atlas-board .signal-electric-pulse::after { display:none; }
+.atlas-inspector { display:flex; flex-direction:column; min-width:0; padding:18px; border-inline-start:1px solid var(--line); background:linear-gradient(135deg,var(--surface),var(--panel)); }
+.atlas-field { color:var(--muted); font-weight:650; font-size:.66rem; text-transform:uppercase; letter-spacing:.09em; }
+.atlas-inspector h3 { font:inherit; font-size:clamp(1.7rem,2.6vw,2.6rem); font-weight:700; letter-spacing:-.035em; margin:.32rem 0 .15rem; }
+.atlas-meta { display:flex; align-items:center; flex-wrap:wrap; gap:8px; font-size:.77rem; color:var(--muted); }
+#signal-atlas-status:not(:empty) { font-size:.65rem;padding:3px 6px;border-radius:5px;border:1px solid var(--line); }
+#signal-atlas-status[data-locked] { background:var(--selected);color:var(--accent); }
+.atlas-inspector h4 { margin:14px 0 6px; padding-top:14px; border-top:1px solid var(--line); font-size:.82rem; }
+.atlas-inspector .signal-choices { display:grid; gap:3px; padding:0; background:none; max-height:240px; overflow:auto; }
+.atlas-inspector .signal-choices button { display:flex; gap:8px; min-width:0; align-items:center; text-align:start; border:1px solid transparent; border-radius:6px; padding:5px; background:none; color:var(--text); font-family:inherit; font-size:.79rem; font-weight:580; }
+.atlas-inspector .signal-choices button:hover,.atlas-inspector .signal-choices button[aria-pressed=true] { border-color:var(--line);background:var(--selected); }
+.atlas-inspector .signal-choices button[aria-pressed=true] {color:var(--accent)}
+.atlas-channel-mark {display:grid;place-items:center;width:33px;height:24px;flex:none;border-radius:4px;background:#e0e6e4;color:#213948;font-size:.65rem}
+.atlas-channel-mark img{max-width:28px;max-height:20px;object-fit:contain}
+.atlas-inspector .signal-choices button > svg {margin-inline-start:auto;flex:none;width:13px;height:13px}
+.atlas-meter { margin-top:auto;padding-top:16px;color:var(--muted);font-size:.72rem; }
+.atlas-meter div { display:flex;align-items:baseline;justify-content:space-between;gap:5px;border-top:1px solid var(--line);padding-top:12px; }
+.atlas-meter strong {color:var(--accent);font-variant-numeric:tabular-nums;font-size:1rem}
+.atlas-meter svg { width:100%;height:34px;display:block;margin-top:6px;fill:none;stroke:var(--accent);stroke-width:1.5; }
+.atlas-grid {stroke:var(--line);stroke-width:.7}
+.atlas-rail {padding:12px 16px;background:var(--panel)}
+.atlas-rail h3 {font-size:.8rem;margin:0 0 8px}
+#signal-atlas-bands {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(94px,100%),1fr));gap:6px}
+.atlas-band {display:grid;grid-template-columns:9px 1fr;column-gap:5px;align-items:center;text-align:start;padding:7px 8px;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:6px;font-family:inherit}
+.atlas-band i {grid-row:span 2;background:var(--planet-color);width:6px;height:6px;border-radius:50%}
+.atlas-band b {font-size:.74rem}.atlas-band small{font-size:.65rem;color:var(--muted)}
+.atlas-band[aria-pressed=true] {border-color:var(--accent);background:var(--selected)}
+@media(max-width:1000px){.atlas-board{grid-template-columns:minmax(0,1fr) 195px}.atlas-inspector{padding:13px}.atlas-board .signal-map-caption{display:none}}
+@media(max-width:760px){.atlas-board{grid-template-columns:1fr}.atlas-inspector{border:0;border-top:1px solid var(--line)}.atlas-inspector .signal-choices{grid-template-columns:repeat(auto-fit,minmax(112px,1fr))}.atlas-board .signal-world{height:clamp(310px,75vw,430px)}.atlas-maphead,.atlas-legend{left:10px;right:10px}.atlas-board .signal-planet small{display:none}}
+.atlas-board .iv-3d .signal-orbit { display:none; }
+.atlas-board .signal-planet[aria-pressed=true] :is(strong,small) { margin-top:5px; }

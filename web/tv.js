@@ -2,7 +2,7 @@
 
 const byId = (id) => document.getElementById(id);
 const video = byId("video");
-createPictureControls(video);
+const syncPictureVisibility = createPictureControls(video);
 const playButton = byId("play");
 const soundButton = byId("sound");
 const screen = byId("screen");
@@ -38,6 +38,8 @@ const favoritesKey = "arkhamtv.favorites";
 let player = null;
 let streamId = null;
 let liveSource = null;
+let returnToLiveTimer;
+let returnToLiveFrame;
 let tuningTo = null;
 let playerError = null;
 let channelListKey = null;
@@ -118,6 +120,7 @@ function syncMonitorPlay() {
 }
 
 function unloadVideo() {
+  cancelReturnedLiveCheck();
   liveStartup.cancel();
   liveSource = null;
   streamId = null;
@@ -229,11 +232,37 @@ function syncLivePlayback(stream, restorePicture = false) {
     return;
   }
   if (stream.id !== streamId) attachStream(stream);
-  else if (restorePicture && window.arkhamNative && !player && liveSource) {
-    // macOS WebKit may keep playing audio after hiding the video layer.
-    // Reattach the current playlist once the Live view is visible again.
-    attachStream(stream, false, liveSource.userPaused);
+  else if (restorePicture && window.arkhamNative && !player && liveSource && !liveSource.userPaused) {
+    checkReturnedLivePicture(liveSource);
   }
+}
+
+function cancelReturnedLiveCheck() {
+  clearTimeout(returnToLiveTimer);
+  if (returnToLiveFrame !== undefined) video.cancelVideoFrameCallback(returnToLiveFrame);
+  returnToLiveFrame = undefined;
+}
+
+function checkReturnedLivePicture(source) {
+  cancelReturnedLiveCheck();
+  const started = video.currentTime;
+  let presented = 0;
+  function countFrame() {
+    presented++;
+    returnToLiveFrame = video.requestVideoFrameCallback(countFrame);
+  }
+  if (video.requestVideoFrameCallback) returnToLiveFrame = video.requestVideoFrameCallback(countFrame);
+  returnToLiveTimer = setTimeout(() => {
+    cancelReturnedLiveCheck();
+    if (liveSource !== source || source.userPaused || activeView !== "#directo" || document.hidden || video.seeking) return;
+    const ranges = video.seekable;
+    // WebKit buffers several segments normally. Only treat the position as
+    // stale when it has fallen out of the seekable window.
+    const behind = ranges.length > 0 && video.currentTime < ranges.start(0) - .25;
+    const stalled = video.paused || video.currentTime - started < 1 ||
+      (video.requestVideoFrameCallback && presented < 12);
+    if (behind || stalled || playerError) attachStream(source.stream);
+  }, 1800);
 }
 
 function playbackError(message) {
@@ -938,6 +967,8 @@ document.addEventListener("keydown", (event) => {
 });
 
 const routes = new Set(["#directo", "#canales", "#sintonizador", "#configuracion", "#guia", "#ecualizador", "#grabaciones", "#changelog"]);
+const localAI = window.createLocalAI?.({ video, navigate: navigateTo });
+if (localAI) routes.add("#transcripciones");
 const links = document.querySelectorAll(".nav-link, .footer-changelog a");
 let activeView = null;
 let miniMode = false;
@@ -952,7 +983,9 @@ const audioStudio = createAudioStudio({
 const captureOptions = createCaptureOptions({ action, current: () => latest });
 const guide = createGuide({ api, action, tune: tuneChannel, chooseCapture: captureOptions.choose });
 const programInfo = createProgramInfo({ api });
-const recordingsView = createRecordings({ action, chooseCapture: captureOptions.choose, openRecording: (id) => navigateTo("#grabacion-" + id) });
+const recordingsView = createRecordings({ action, chooseCapture: captureOptions.choose,
+  openRecording: (id) => navigateTo("#grabacion-" + id),
+  transcribeRecording: window.arkhamNative || window.arkhamLinux ? localAI?.transcribeRecording : null });
 
 const hdmiDialog = byId("hdmi-dialog");
 const hdmiTitle = byId("hdmi-title");
@@ -1353,6 +1386,8 @@ function syncNav() {
   const catalog = byId("canales");
   const catalogLayout = byId("catalog-layout");
   byId("directo").hidden = !live;
+  if (!live && previous === "#directo") cancelReturnedLiveCheck();
+  if (previous !== current) syncPictureVisibility();
   catalog.hidden = !live && !listing;
   catalog.classList.toggle("catalog-page", listing);
   if (live && favoritesPanel.parentElement !== byId("directo")) byId("directo").append(favoritesPanel);
@@ -1371,6 +1406,7 @@ function syncNav() {
   byId("ecualizador").hidden = current !== "#ecualizador";
   byId("grabaciones").hidden = current !== "#grabaciones";
   byId("grabacion").hidden = !recording;
+  byId("transcripciones").hidden = current !== "#transcripciones";
   byId("changelog").hidden = current !== "#changelog";
   guide.navigate(current);
   audioStudio.navigate(current);
@@ -1379,6 +1415,7 @@ function syncNav() {
     renderAudioSettings(latest, true);
   }
   activeView = current;
+  localAI?.navigate(current, miniMode);
   if (recording && previous !== current) {
     const recordingVideo = byId("recorded-video");
     recordingVideo.muted = video.muted;

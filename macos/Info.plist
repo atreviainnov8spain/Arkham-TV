@@ -15,7 +15,7 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleVersion</key>
-    <string>56</string>
+    <string>68</string>
     <key>NSCameraUsageDescription</key>
     <string>Arkham TV recibe el vídeo del receptor de televisión mediante la capturadora HDMI USB que elijas.</string>
     <key>NSMicrophoneUsageDescription</key>

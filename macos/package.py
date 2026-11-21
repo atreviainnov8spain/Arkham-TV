@@ -2,6 +2,7 @@
 """Package a universal Arkham TV app from the official Python and FFmpeg builds."""
 import argparse
 import hashlib
+import json
 import os
 from pathlib import Path
 import plistlib
@@ -15,6 +16,7 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from native.changelog import release_version
+from native.local_ai import TOOLS as AI_TOOLS
 
 PYTHON_VERSION = "3.13"
 ARCHITECTURES = ("arm64", "x86_64")
@@ -137,6 +139,11 @@ def verify_bundle(contents):
     ]
     codes.extend((contents / "Frameworks/Python.framework/Versions/3.13/lib").glob("*.dylib"))
     codes.extend((contents / "Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload").glob("*.so"))
+    codes.extend(contents / "Helpers" / tool for tool in AI_TOOLS)
+    speech = contents / "Helpers/sherpa"
+    if speech.is_dir():
+        codes.extend(speech / "bin" / tool for tool in ("sherpa-onnx-offline", "sherpa-onnx-offline-speaker-diarization"))
+        codes.extend(path for path in (speech / "lib").glob("*.dylib") if not path.is_symlink())
     for path in codes:
         archs = subprocess.check_output(["/usr/bin/lipo", "-archs", path], text=True).split()
         if not set(ARCHITECTURES).issubset(archs):
@@ -144,10 +151,71 @@ def verify_bundle(contents):
     command("/usr/bin/codesign", "--verify", "--deep", "--strict", contents.parent)
 
 
+def stage_ai_release(contents, helpers):
+    resources = contents / "Resources"
+    source = resources / "arkham"
+    release = json.loads((ROOT / "macos/release.json").read_text(encoding="utf-8"))
+    english = release.pop("english")
+    version = release["version"]
+    assets = source / "assets"
+    history = assets / "changelog.json"
+    translations = assets / "changelog.en.json"
+    previous = {item["version"]: item for item in json.loads(history.read_text())}
+    languages = json.loads(translations.read_text())
+    for archived in (ROOT / "macos/releases").glob("*.json"):
+        item = json.loads(archived.read_text())
+        languages[item["version"]] = item.pop("english")
+        previous[item["version"]] = item
+    previous.pop(version, None)
+    older = sorted(previous.values(), key=lambda item: tuple(map(int, item["version"].split("."))), reverse=True)
+    history.write_text(json.dumps([release, *older], ensure_ascii=False), encoding="utf-8")
+    translations.write_text(json.dumps({**languages, version: english}, ensure_ascii=False), encoding="utf-8")
+    (assets / "version.txt").write_text(version + "\n", encoding="ascii")
+    release_version(source)
+    for tool in AI_TOOLS:
+        path = contents / "Helpers" / tool
+        shutil.copy2(helpers / tool, path)
+        sign(path)
+    speech = helpers / "sherpa"
+    if not (speech / "bin/sherpa-onnx-offline").is_file():
+        raise ValueError("Descarga el motor de voz con native/fetch_speech_runtime.py --platform macos.")
+    target = contents / "Helpers/sherpa"
+    for folder in ("bin", "lib"):
+        shutil.copytree(speech / folder, target / folder, symlinks=True, dirs_exist_ok=True)
+    notices = contents / "Resources/Licenses/sherpa"
+    notices.mkdir(parents=True, exist_ok=True)
+    for file in speech.iterdir():
+        if file.is_file():
+            shutil.copy2(file, notices / file.name)
+    for path in (target / "lib").glob("*.dylib"):
+        if not path.is_symlink():
+            sign(path)
+    for binary in (target / "bin").iterdir():
+        if binary.is_file():
+            sign(binary)
+    licenses = resources / "Licenses"
+    for filename in ("whisper-LICENSE", "llama-LICENSE"):
+        shutil.copy2(helpers / filename, licenses)
+    shutil.copy2(ROOT / "macos/build-local-ai.sh", licenses)
+    with (licenses / "Fuentes.txt").open("a", encoding="utf-8") as credits:
+        credits.write(
+            "whisper.cpp v1.8.3 (MIT) · https://github.com/ggml-org/whisper.cpp/tree/v1.8.3\n"
+            "llama.cpp b11556 (MIT) · https://github.com/ggml-org/llama.cpp/tree/b11556\n"
+            "Whisper (MIT) · https://huggingface.co/ggerganov/whisper.cpp\n"
+            "Qwen3 (Apache-2.0) · https://huggingface.co/Qwen\n"
+            "Bonsai 2 (Apache-2.0) · https://huggingface.co/prism-ml\n")
+    plist = contents / "Info.plist"
+    info = plistlib.loads(plist.read_bytes())
+    info["CFBundleShortVersionString"] = version
+    info["CFBundleVersion"] = "68"
+    plist.write_bytes(plistlib.dumps(info))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("dependencies", type=Path)
     parser.add_argument("--output", type=Path, default=ROOT / "dist")
+    parser.add_argument("--ai-helpers", type=Path, help="Output from macos/build-local-ai.sh")
     args = parser.parse_args()
     version = release_version(ROOT)
     dependencies = args.dependencies.resolve()
@@ -197,6 +265,7 @@ def main():
             "Controlador USB · Contents/Resources/arkham/native/LICENSE\n"
             "HLS.js · Contents/Resources/arkham/web/HLS-LICENSE\n", encoding="utf-8",
         )
+        stage_ai_release(contents, args.ai_helpers or dependencies / "ai-built")
         sign(bundle)
         stamp_bundle(bundle)
         verify_bundle(contents)

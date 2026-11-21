@@ -2,23 +2,36 @@
 
 ![Arkham TV, televisión terrestre en directo y grabaciones locales](docs/store/banner.png)
 
-Arkham TV permite **ver y grabar la TDT en abierto** en macOS y Linux. Puedes conectar la antena a un sintonizador USB compatible o usar un receptor de televisión cuya salida HDMI vaya a una capturadora USB, como la **Elgato Cam Link 4K**. Incluye Guía TV, favoritos, perfiles de sintonización y un ecualizador de diez bandas. La interfaz está disponible en español e inglés.
+Arkham TV permite **ver y grabar la TDT en abierto** en macOS y Linux. Puedes conectar la antena a un sintonizador USB compatible o usar un receptor de televisión cuya salida HDMI vaya a una capturadora USB, como la **Elgato Cam Link 4K**. Incluye Guía TV, favoritos, perfiles de sintonización, ecualizador de diez bandas, controles de imagen y **transcripción e IA local**. La interfaz está disponible en español e inglés.
 
 El proyecto empezó para recuperar el uso de los sintonizadores **AVerMedia A835 y A835B**. En Linux también funciona con otros sintonizadores DVB-T o DVB-T2 que el sistema reconozca como dispositivos DVB. Los perfiles guardan la lista de canales de cada lugar.
 
-[Arkham TV en Snap Store](https://snapcraft.io/arkham-tv) · [Descargar Arkham TV 1.10](https://github.com/atreviainnov8spain/Arkham-TV/releases/tag/v1.10) · [Historial de cambios](assets/changelog.json) · [Licencia](LICENSE.md)
+[Arkham TV en Snap Store](https://snapcraft.io/arkham-tv) · [Descargar Arkham TV 1.12](https://github.com/atreviainnov8spain/Arkham-TV/releases/tag/v1.12) · [Historial de cambios](docs/CHANGELOG.md) · [Licencia](LICENSE.md)
+
+## Novedades de la 1.12
+
+- **Universo de canales en Three.js:** nuevo atlas orbital en Análisis de señal, con planetas por frecuencia, inspector de canales y pulso de la recepción activa.
+- **Transcripciones legibles:** párrafos continuos o guion con los tiempos en una columna de color. Exportación en texto o Markdown con tiempos opcionales.
+- **Modelos de voz a elegir:** Whisper en distintos tamaños y los modelos experimentales **Parakeet TDT v3 INT8** y **Qwen3-ASR 0.6B INT8**, descargables en macOS y Linux. Qwen3 y Bonsai 2 siguen disponibles para el chat, los resúmenes y los informes.
+- **Grabaciones con voces:** separación local opcional en **Voz 1**, **Voz 2**, etc., con nombres que puedes editar. Se aplica a grabaciones, manteniendo el directo sin ese procesamiento.
+- **Biblioteca más clara:** distintivos **DIRECTO** y **GRABACIÓN**, título, fecha y modelo utilizado. Puedes limpiar el panel tras finalizar conservando la sesión y el audio pendiente.
+- **Reproducción prioritaria:** cola local de audio pendiente, mejoras de protección en Linux y motores AVX2 para procesadores Intel/AMD compatibles. macOS conserva Whisper con Metal.
+
+Las descargas incluyen **macOS Universal**, **Ubuntu ARM64** y **Ubuntu Intel/AMD**, además de los Snaps y ejecutables portátiles de Linux. [Ejecutables y comprobaciones SHA-256](https://github.com/atreviainnov8spain/Arkham-TV/releases/tag/v1.12)
 
 ## Novedades de la 1.10
 
 - **Entrada HDMI** en macOS y Linux. Usa el mando del receptor para sintonizar y cambiar de canal. Arkham TV recibe el vídeo y el audio de la capturadora, permite grabar hasta 1080p con sonido estéreo y puede compartir la emisión en el móvil.
 - **Imagen** en En directo. **Estándar** reproduce la imagen capturada sin filtros. También puedes elegir Película, Cine Filmmaker o Vívido. Con **Personal** puedes ajustar brillo, contraste, nitidez y color mientras ves la emisión. **Guardar mi ajuste** guarda un único perfil personal y reemplaza el anterior.
-- **HDMI en Linux** con desentrelazado y cadencia ajustada a la capturadora. Con una entrada entrelazada de 25 fotogramas por segundo, el desentrelazado puede generar 50 fotogramas progresivos por segundo. El Snap estable publica esta actualización para ARM64 y AMD64.
+- **HDMI en Linux** con desentrelazado y cadencia ajustada a la capturadora. Con una entrada entrelazada de 25 fotogramas por segundo, el desentrelazado puede generar 50 fotogramas progresivos por segundo.
 
 Las versiones anteriores incorporaron **Análisis de señal**, **Teletexto** y **Ver en el móvil**. El análisis de recepción, la Guía TV y el Teletexto recibidos por antena usan un sintonizador DVB. Para compartir la emisión, escanea el QR desde un iPhone o Android conectado a la misma red Wi-Fi.
 
 ## Capturas
 
 ![En directo, con controles de volumen y vúmetro estéreo](docs/store/01-live.png)
+
+![Universo de canales en Análisis de señal, con planetas e inspector de frecuencias](docs/propuestas/universo/Universo-en-Arkham-TV.png)
 
 | Guía TV | Ecualizador |
 | --- | --- |
@@ -32,13 +45,13 @@ Las versiones anteriores incorporaron **Análisis de señal**, **Teletexto** y *
 
 ### Linux con Snap
 
-Instala **Arkham TV** desde Snap Store o ejecuta `sudo snap install arkham-tv`. El canal estable distribuye la **1.10** para **ARM64** y **AMD64** (Intel y AMD de 64 bits). [Snap Store](https://snapcraft.io/arkham-tv)
+Instala **Arkham TV** desde Snap Store o ejecuta `sudo snap install arkham-tv`. El canal estable distribuye la **1.12** para **ARM64** y **AMD64** (Intel y AMD de 64 bits). Si ya la tienes instalada, puedes buscar la actualización con `sudo snap refresh arkham-tv`. [Snap Store](https://snapcraft.io/arkham-tv)
 
 Para usar un sintonizador de antena directa en una instalación nueva, habilita su acceso con `sudo snap connect arkham-tv:dvb`. [Permisos y compilación del Snap](snap/README.md)
 
 ### Ubuntu Desktop con paquete .deb
 
-Descarga el paquete **1.10** de tu arquitectura. [Ubuntu AMD64 (Intel y AMD de 64 bits)](https://github.com/atreviainnov8spain/Arkham-TV/releases/download/v1.10/Arkham-TV-1.10-Ubuntu-Intel-x86_64.deb) · [Ubuntu ARM64](https://github.com/atreviainnov8spain/Arkham-TV/releases/download/v1.10/Arkham-TV-1.10-Ubuntu-ARM64.deb)
+Descarga el paquete **1.12** de tu arquitectura. [Ubuntu AMD64 (Intel y AMD de 64 bits)](https://github.com/atreviainnov8spain/Arkham-TV/releases/download/v1.12/Arkham-TV-1.12-Ubuntu-Intel-x86_64.deb) · [Ubuntu ARM64](https://github.com/atreviainnov8spain/Arkham-TV/releases/download/v1.12/Arkham-TV-1.12-Ubuntu-ARM64.deb)
 
 Abre el paquete de tu arquitectura en el **Centro de aplicaciones** de Ubuntu. También puedes instalar el archivo con `sudo apt install ./nombre-del-paquete.deb` desde la carpeta de descargas. A continuación, abre **Arkham TV** desde el menú de aplicaciones. El paquete incluye el lector DVB, FFmpeg y FFprobe. Ubuntu instala las dependencias del escritorio.
 
@@ -57,7 +70,20 @@ El paquete de prueba incluye acceso a dispositivos para que Arkham TV use `/dev/
 
 ### macOS
 
-Descarga el ZIP universal de **Arkham TV 1.10**, descomprímelo y abre **Arkham TV.app**. Requiere macOS 12.3 o posterior y funciona en Intel y Apple Silicon. La app incluye Python, los códecs y el lector USB. [macOS Universal](https://github.com/atreviainnov8spain/Arkham-TV/releases/download/v1.10/Arkham-TV-1.10-macOS-Universal.zip)
+Descarga el ZIP universal de **Arkham TV 1.12**, descomprímelo y abre **Arkham TV.app**. Requiere macOS 12.3 o posterior y funciona en Intel y Apple Silicon. La app incluye Python, los códecs y el lector USB. [macOS Universal](https://github.com/atreviainnov8spain/Arkham-TV/releases/download/v1.12/Arkham-TV-1.12-macOS-Universal.zip)
+
+## Transcripción e IA local
+
+1. En **Configuración → Modelos de IA local**, elige y descarga un modelo de voz y pulsa **Usar modelo**. Para conversar con el texto, descarga también un modelo de Qwen3 o Bonsai 2.
+2. En **En directo**, abre **Asistente IA** y pulsa **Iniciar transcripción**. Desplegar el asistente no inicia la transcripción automáticamente.
+3. En **Grabaciones**, pulsa **Transcribir** junto a Eliminar. El resultado aparecerá en **Transcripciones IA** identificado con su grabación de origen.
+4. Para distinguir hablantes en archivos grabados, descarga los modelos de **Voces de grabaciones** y activa su interruptor. También puedes usar **Separar voces** en una transcripción de grabación guardada.
+
+El texto se muestra en párrafos. **Marcas de tiempo** cambia a un guion por filas con el tiempo en una columna separada. Puedes renombrar las etiquetas de voz pulsando sobre ellas; los nombres de personajes o personas los asigna el usuario.
+
+El chat puede trabajar con el directo o con transcripciones guardadas y generar respuestas estructuradas, tablas y gráficos respaldados por fragmentos de la fuente. Puedes exportar a **Markdown** o **texto**, elegir si incluyes las respuestas de IA y conservar o retirar las marcas de tiempo.
+
+La inferencia se realiza en el equipo. Las descargas de modelos requieren Internet; el audio, las transcripciones y las consultas se procesan localmente. El audio pendiente se conserva mientras la reproducción tiene prioridad.
 
 ## Ver un receptor por HDMI
 
@@ -104,7 +130,13 @@ La edición nativa de Ubuntu guarda sus ajustes en `${XDG_DATA_HOME:-~/.local/sh
 
 ## Compilar la edición de Ubuntu
 
-Los scripts de [linux/](linux) construyen FFmpeg y FFprobe estáticos con Zig, FFmpeg 8.1.2 y x264. Instala también `make` y `pkg-config`. Para compilar en x86-64 con ensamblador optimizado, instala `nasm`. El empaquetador usa Python 3 y produce el ejecutable portátil y su `.deb`.
+Los scripts de [linux/](linux) construyen FFmpeg y FFprobe estáticos con Zig, FFmpeg 8.1.2 y x264. Instala también `make`, `pkg-config` y CMake. Para compilar en x86-64 con ensamblador optimizado, instala `nasm`. El empaquetador usa Python 3 y produce el ejecutable portátil y su `.deb`. Los motores de IA se construyen con whisper.cpp v1.8.3 y llama.cpp b11556.
+
+En **Configuración → Modelos de IA local** puedes elegir el tamaño de Whisper para transcribir y usar Qwen3 o Bonsai 2 para conversar con la transcripción. La aplicación descarga los modelos que elijas y conserva los que ya tengas instalados. Los modelos se ejecutan en el equipo.
+
+En Linux, el asistente conserva el audio pendiente del directo en una cola local y continúa procesándolo cuando recupera recursos. En **Grabaciones**, el botón **Transcribir** crea una transcripción identificada por el título y la fecha del archivo en **Transcripciones IA**. Los motores de IA usan CPU con prioridad baja; los procesadores Intel/AMD compatibles seleccionan automáticamente la variante AVX2, conservando la variante genérica para equipos anteriores.
+
+La versión **1.12** presenta las transcripciones en párrafos, con marcas de tiempo opcionales en pantalla y al exportar. Distingue el origen **DIRECTO** o **GRABACIÓN** y permite limpiar el panel tras finalizar conservando la sesión. Linux y macOS añaden **Parakeet TDT v3 INT8** y **Qwen3-ASR 0.6B INT8** como modelos experimentales descargables. macOS conserva su motor Whisper con Metal.
 
 El instalador original permite recuperar los archivos fuente de las dependencias y sus licencias con `arkham-tv --fuentes`. Descomprime los archivos de FFmpeg y x264 y ajusta las rutas del ejemplo. Repite la compilación de los códecs para `aarch64` si también quieres generar el paquete ARM64.
 
@@ -113,11 +145,16 @@ ZIG=/ruta/a/zig
 FFMPEG_SRC=/ruta/a/ffmpeg-8.1.2
 X264_SRC=/ruta/a/x264-stable
 MEDIA=/ruta/a/compilacion/media
+AI=/ruta/a/compilacion/ia
+WHISPER_SRC=/ruta/a/whisper.cpp-1.8.3
+LLAMA_SRC=/ruta/a/llama.cpp-b11556
 
 sh linux/build-media.sh "$ZIG" "$FFMPEG_SRC" "$X264_SRC" "$MEDIA" x86_64
+bash linux/build-local-ai.sh "$ZIG" "$WHISPER_SRC" "$LLAMA_SRC" "$FFMPEG_SRC" "$AI"
+python3 native/fetch_speech_runtime.py "$AI" --platform linux
 python3 linux/package.py "$ZIG" "$MEDIA" \
   /ruta/a/ffmpeg-8.1.2.tar.xz /ruta/a/x264.tar.gz \
-  --arch x86_64 --output dist
+  --ai-helpers "$AI" --arch x86_64 --output dist/1.12
 ```
 
 Para macOS, [macos/build-ffmpeg.sh](macos/build-ffmpeg.sh) compila para ambas arquitecturas con las herramientas de Xcode. [macos/package.py](macos/package.py) documenta las rutas de entrada del framework oficial de Python 3.13, los binarios de FFmpeg y el firmware AF9035 verificado. El empaquetador genera un ZIP universal. Para construir el Snap y su auxiliar HDMI, sigue los pasos de [snap/README.md](snap/README.md).

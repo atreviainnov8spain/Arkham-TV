@@ -1,0 +1,4 @@
+ONNX Runtime v1.28.2 as distributed by Sherpa-ONNX v2.0.2.
+https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.28.2/onnxruntime-linux-x64-glibc2_17-Release-1.28.2.zip
+SHA-256: c4f8994d56191d9d2c92a961b39fe790459f2c5d155f912b239506ea31359534
+Source reference: https://github.com/k2-fsa/sherpa-onnx/blob/v2.0.2/cmake/onnxruntime-linux-x86_64.cmake

@@ -22,14 +22,15 @@ function createSignalAnalysis({ api, tune }) {
     teletext: ["Teletexto", "Teletext"],
     other: ["Otros datos y relleno", "Other data and padding"],
   };
-  const colors = ["#89b5ff", "#80d5c4", "#bfaeff", "#e6b985", "#e6a2c5"];
+  const colors = ["#92a7ef", "#91bdb0", "#bf96cf", "#d5a578", "#d08f9b", "#799ed0", "#82cabe"];
   const tau = Math.PI * 2;
   const svgName = "http://www.w3.org/2000/svg";
   let state, reading = {}, groups = [], channelKey, frequency = null, view = "universe";
   let blocked = true, connected = true, opened = false, visible = false, feedback = "";
   let scene, loadingScene, loadingD3, request, lastPoll = 0;
-  let position, flight, frame, previousTime, phase = 0, revolution = 0;
-  let accent = "#b5ec70";
+  let frame, previousTime, phase = 0, orbitPhase = 0, zoom = 1, panX = 0, panY = 0;
+  let paused = false, drag = null, choicesGroup;
+  let history = [];
 
   function setText(id, value) {
     const node = el(id);
@@ -76,7 +77,7 @@ function createSignalAnalysis({ api, tune }) {
   renderRail();
 
   const orbits = [];
-  const transmission = ["signal-bank", "signal-edge signal-edge--red", "signal-edge signal-edge--blue", "signal-wire"]
+  const transmission = ["signal-bank", "signal-wire"]
     .map(className => svg("path", className));
   const pulses = Array.from({ length: 3 }, () => node("span", undefined, "signal-electric-pulse"));
   electric.append(...pulses);
@@ -116,244 +117,212 @@ function createSignalAnalysis({ api, tune }) {
     setText("feedback", detail);
     el("feedback").hidden = !detail;
   }
+  const inspectedGroup = () => groups.find(g => g.frequency === frequency) || activeGroup() || groups[0];
+
   function rebuild() {
-    for (const group of groups) for (const channel of group.channels) channel.path?.remove();
+    for (const group of groups) group.orbit.remove();
     groups = groupBroadcastChannels(state?.channels || []).map((group, index) => ({
       ...group, color: colors[index % colors.length],
     }));
-    if (!groups.some(group => group.frequency === frequency)) {
-      frequency = null;
-      flight = null;
-    }
+    if (!groups.some(g => g.frequency === frequency)) frequency = null;
     planets.replaceChildren();
     satellites.replaceChildren();
+    el("atlas-bands").replaceChildren();
     channelPicker.setGroups(groups);
     for (const group of groups) {
-      const label = `UHF ${group.uhf}`;
-      const frequencyLabel = format(group.frequency / 1e6, "MHz");
+      const label = "UHF " + group.uhf, mhz = format(group.frequency / 1e6, "MHz");
       const planet = node("button", undefined, "signal-planet");
-      planet.append(node("strong", label), node("small", frequencyLabel));
+      planet.append(node("strong", label), node("small", mhz));
       planet.style.setProperty("--planet-color", group.color);
-      planet.addEventListener("click", () => {
-        if (frequency === group.frequency) resetUniverse();
-        else {
-          focus(group.frequency);
-          overview.focus({ preventScroll: true });
-        }
-      });
-      planet.setAttribute("aria-label", `${label} · ${frequencyLabel}`);
+      planet.setAttribute("aria-label", label + " · " + mhz);
+      planet.onclick = () => focus(group.frequency);
       planets.append(planet);
       group.planet = planet;
+      group.orbit = svg("path", "atlas-moon-orbit");
+      links.insertBefore(group.orbit, transmission[0]);
+      const band = node("button", undefined, "atlas-band");
+      band.style.setProperty("--planet-color", group.color);
+      band.append(node("i"), node("b", label), node("small", mhz));
+      band.onclick = () => focus(group.frequency);
+      el("atlas-bands").append(band);
+      group.band = band;
       for (const channel of group.channels) {
-        channel.dot = node("button", undefined, "signal-satellite");
-        channel.dot.append(node("i"), node("span", channel.name));
-        channel.dot.style.setProperty("--planet-color", group.color);
-        channel.dot.setAttribute("aria-label", `${channel.name} · ${label}`);
-        channel.dot.title = channel.name;
-        channel.dot.addEventListener("click", () => selectChannel(channel.id));
-        channel.path = svg("path");
-        // Keep the signal pulse above the lines that connect planets to their channels.
-        links.insertBefore(channel.path, transmission[0]);
-        satellites.append(channel.dot);
+        const dot = node("button", undefined, "signal-satellite");
+        dot.append(node("i"), node("span", channel.name));
+        dot.style.setProperty("--planet-color", group.color);
+        dot.setAttribute("aria-label", channel.name + " · " + label);
+        dot.title = channel.name;
+        dot.onclick = () => selectChannel(channel.id);
+        satellites.append(dot);
+        channel.dot = dot;
       }
     }
     const count = groups.reduce((sum, group) => sum + group.channels.length, 0);
     setText("map-count", f("{channels} canales · {groups} frecuencias", "{channels} channels · {groups} frequencies",
-      { channels: count, groups: groups.length }));
+      {channels:count, groups:groups.length}));
     el("empty").hidden = Boolean(groups.length);
-    buildChoices();
-  }
-  function buildChoices() {
-    const group = groups.find(group => group.frequency === frequency);
-    const toolbar = el("choices");
-    toolbar.replaceChildren();
-    toolbar.hidden = !group;
-    if (group) {
-      for (const channel of group.channels) {
-        const button = node("button", channel.name, "button secondary");
-        button.dataset.channel = channel.id;
-        button.addEventListener("click", () => selectChannel(channel.id));
-        toolbar.append(button);
-      }
-    }
+    el("atlas-rail").hidden = !groups.length;
+    choicesGroup = null;
     syncControls();
   }
+
+  function buildChoices(group) {
+    const toolbar = el("choices");
+    toolbar.replaceChildren();
+    for (const channel of group?.channels || []) {
+      const button = node("button");
+      button.dataset.channel = channel.id;
+      const mark = node("span", undefined, "atlas-channel-mark");
+      mark.setAttribute("aria-hidden", "true");
+      const logo = window.channelLogoPath?.(channel.name);
+      if (logo) {
+        const image = node("img"); image.src = logo; image.alt = "";
+        mark.append(image);
+      } else mark.append(icon("i-live"));
+      button.append(mark, node("span", channel.name), icon("i-chevron"));
+      button.onclick = () => selectChannel(channel.id);
+      toolbar.append(button);
+    }
+  }
+
   function syncControls() {
     showFeedback();
     channelPicker.update(currentChannel(), !ready(), f("Elige un canal", "Choose a channel"));
-    overview.hidden = frequency === null;
-    for (const group of groups) for (const channel of group.channels) {
-      const active = currentChannel() === channel.id;
-      channel.dot.disabled = !ready();
-      channel.dot.setAttribute("aria-pressed", String(active));
-      channel.path.classList.toggle("signal-active", active);
+    const selected = inspectedGroup();
+    if (choicesGroup !== selected) {
+      buildChoices(selected);
+      choicesGroup = selected;
+    }
+    for (const group of groups) {
+      for (const item of [group.planet, group.band]) item.setAttribute("aria-pressed", String(group === selected));
+      for (const channel of group.channels) {
+        channel.dot.disabled = !ready();
+        channel.dot.setAttribute("aria-pressed", String(channel.id === currentChannel()));
+      }
     }
     for (const button of el("choices").children) {
       button.disabled = !ready();
       button.setAttribute("aria-pressed", String(button.dataset.channel === currentChannel()));
     }
+    setText("atlas-uhf", selected ? "UHF " + selected.uhf : "—");
+    setText("atlas-mhz", format(selected ? selected.frequency / 1e6 : null, "MHz"));
+    const tuned = connected && selected && selected === activeGroup();
+    const locked = tuned && reading.locked === true;
+    setText("atlas-status", !selected ? "" : locked ? f("En recepción","Receiving")
+      : tuned ? (reading.locked === false ? f("Sin señal","No signal") : f("Sintonizando","Tuning"))
+      : f("En el mapa","On map"));
+    el("atlas-status").toggleAttribute("data-locked", !!locked);
+    setText("atlas-cnr", format(locked ? reading.cnr : null, "dB"));
+    const samples = locked ? history.filter(point => point.time >= performance.now() - 30000) : [];
+    let path = "";
+    if (samples.length > 1 && Number.isFinite(reading.cnr)) {
+      const latest = samples.at(-1).time;
+      const values = samples.map(point => point.value);
+      const low = Math.min(...values) - 1, high = Math.max(...values) + 1;
+      path = samples.map(({time,value},i) => (i ? "L" : "M") +
+        ((time - latest + 30000) / 30000 * 240).toFixed(1) + " " +
+        (33 - (value - low) / (high - low) * 30).toFixed(1)).join(" ");
+    }
+    el("atlas-trace").setAttribute("d", path);
+    el("less").disabled = zoom <= .8;
+    el("more").disabled = zoom >= 1.6;
+    const title = paused ? f("Reanudar movimiento","Resume motion") : f("Pausar movimiento","Pause motion");
+    el("motion").setAttribute("aria-label",title); el("motion").title = title;
+    el("motion").querySelector("use").setAttribute("href", paused ? "#i-play" : "#i-pause");
+    el("motion").disabled = motion.matches;
   }
+
   function focus(value) {
-    if (frequency === value) return;
-    flight = position ? { from: position, start: performance.now() } : null;
     frequency = value;
-    buildChoices();
-    draw(performance.now());
-    schedule();
+    // The inspector can explore one multiplex while the tuner receives another.
+    if (zoom > 1 && value !== null) {
+      const hub = layoutHub(groups.findIndex(g => g.frequency === value), groups.length);
+      panX = hub.x * .45;
+      panY = hub.y * .45;
+    }
+    syncControls();
+    draw();
   }
-
   function resetUniverse() {
-    if (frequency === null) return;
-    const planet = groups.find(group => group.frequency === frequency)?.planet;
+    zoom = 1;
+    panX = panY = 0;
     focus(null);
-    planet?.focus({ preventScroll: true });
   }
 
-  function orbitFor(index, count, angle, compact) {
-    const rings = count > 8 ? Math.ceil(count / 8) : 1;
-    const ring = rings === 1 ? 0 : index % rings;
+  function layoutHub(index, count) {
+    const rings = Math.max(1, Math.ceil(count / 8)), ring = index % rings;
     const slots = Math.ceil((count - ring) / rings);
-    const theta = angle + Math.floor(index / rings) * tau / slots + ring * .33;
-    const factor = rings === 1 ? 1 : .44 + .56 * ring / (rings - 1);
-    const radius = (compact ? 26 : 31) * factor;
-    return [50 + Math.cos(theta) * radius, 49 + (29 * Math.sin(theta) - 5 * Math.cos(theta)) * factor];
+    const theta = (count === 1 ? 2.40 : 1.40) - Math.floor(index / rings) * tau / slots + ring * .25;
+    const spread = rings === 1 ? 1 : .46 + .54 * ring / (rings - 1);
+    const radii = [.44,.57,.5,.64,.46,.51,.72];
+    return { x: 5.76 * Math.cos(theta) * spread, y: 2.69 * Math.sin(theta) * spread,
+      r: radii[index % radii.length] * Math.min(1, Math.sqrt(8 / count)) };
   }
-  function place(element, [x, y]) {
-    element.style.left = `${x.toFixed(2)}%`;
-    element.style.top = `${y.toFixed(2)}%`;
+  function place(element, x, y) {
+    element.style.left = x.toFixed(2) + "px";
+    element.style.top = y.toFixed(2) + "px";
   }
-  function draw(now) {
-    const width = sky.clientWidth;
-    const height = sky.clientHeight;
+  function draw() {
+    const width = sky.clientWidth, height = sky.clientHeight;
     if (!opened || view !== "universe" || !width || !height) return;
-    const compact = width < 670;
-    const count = groups.length;
-    const active = activeGroup();
-    const origins = groups.map((_, index) => orbitFor(index, count, revolution - 2.66, compact));
-    const targetIndex = groups.findIndex(group => group.frequency === frequency);
-    const focused = targetIndex >= 0;
-    const target = focused ? [...origins[targetIndex], 1.9] : [50, 50, 1];
-    const progress = flight && !motion.matches ? Math.max(0, Math.min(1, (now - flight.start) / 730)) : 1;
-    const eased = progress < .5 ? 4 * progress ** 3 : 1 - (-2 * progress + 2) ** 3 / 2;
-    position = target.map((value, i) => flight ? flight.from[i] * (1 - eased) + value * eased : value);
-    if (progress === 1) flight = null;
-    const [x, y, zoom] = position;
-    const project = ([px, py]) => [50 + (px - x) * zoom, 50 + (py - y) * zoom];
-    const dense = focused ? groups[targetIndex].channels.length > 6 : compact || count > 5;
-    sky.toggleAttribute("data-dots", dense);
-    sky.toggleAttribute("data-focus", focused);
-    setText("map-caption", focused ? f("Explorando UHF {uhf}", "Exploring UHF {uhf}", groups[targetIndex]) : f("Vista general", "Overview"));
-    const antenna = project([50, 49]);
+    const scale = Math.min(width / 15, height / 8.5) * zoom;
+    const px = x => width / 2 + (x - panX) * scale;
+    const py = y => height / 2 - (y - panY) * scale;
+    links.setAttribute("viewBox", "0 0 " + width + " " + height);
     const fallback = sky.querySelector(".signal-fallback");
-    fallback.setAttribute("viewBox", `0 0 ${width} ${height}`);
-    fallback.style.opacity = String(Math.max(0, 1 - (zoom - 1) * 1.2));
-    fallback.querySelector("use").setAttribute("transform",
-      `translate(${antenna[0] * width / 100} ${antenna[1] * height / 100}) scale(${Math.min(width, height) * zoom / 520})`);
-
-    const ringCount = count > 8 ? Math.ceil(count / 8) : count ? 3 : 0;
-    while (orbits.length < ringCount) orbits.push(svg("path", "signal-orbit", links));
-    orbits.forEach((ring, index) => {
-      ring.style.display = index < ringCount ? "" : "none";
-      if (index >= ringCount) return;
-      const factor = count > 8 ? .44 + .56 * index / (ringCount - 1) : [.88, 1, 1.13][index];
-      const [cx, cy] = project([50, 49]);
-      const radius = (compact ? 26 : 31) * factor * zoom;
-      const height = 29 * factor * zoom;
-      const shear = 5 * factor * zoom;
-      ring.setAttribute("d", `M ${cx + radius} ${cy - shear} a ${radius} ${height} 0 0 1 ${-2 * radius} ${2 * shear} a ${radius} ${height} 0 0 1 ${2 * radius} ${-2 * shear}`);
-      ring.style.opacity = String(Math.max(.12, 1 - (zoom - 1) * .9));
-    });
-
-    const hubs = groups.map((group, index) => {
-      const origin = origins[index];
-      const center = project(origin);
-      const size = count > 8 ? 47 : compact ? Math.min(59, width * .14) : 73;
-      const visible = !focused || index === targetIndex || progress < 1;
-      const planet = group.planet;
-      place(planet, center);
-      planet.style.setProperty("--planet-size", `${size * zoom}px`);
-      planet.toggleAttribute("data-active", active === group);
-      planet.setAttribute("aria-expanded", String(index === targetIndex));
-      planet.hidden = !visible;
-      const channels = group.channels;
-      channels.forEach((channel, slot) => {
-        const distributed = channels.length > 4;
-        const angle = -2.32 + slot * tau / channels.length;
-        const dx = compact ? 12 : 9;
-        const offsets = [[-dx, -11], [dx, -11], [dx, 11], [-dx, 11]];
-        const orbitOffset = distributed ? [dx * 1.33 * Math.cos(angle), 13 * Math.sin(angle)] : offsets[slot];
-        const closeOffset = distributed ? [31 * Math.cos(angle), 33 * Math.sin(angle)] : [
-          [compact ? -29 : -30, -22], [29, -22], [29, 22], [-29, 22],
-        ][slot];
-        const mix = focused && index === targetIndex ? eased : 0;
-        const point = project(orbitOffset.map((value, axis) =>
-          origin[axis] + value * (1 - mix) + closeOffset[axis] / zoom * mix));
-        place(channel.dot, point);
-        channel.dot.style.setProperty("--satellite-width", `${Math.max(66, width * .19)}px`);
-        channel.dot.hidden = !visible;
-        channel.path.style.display = visible ? "" : "none";
-        if (visible) rfPath(channel.path, center, point, point[1]);
+    fallback.setAttribute("viewBox", "0 0 " + width + " " + height);
+    fallback.querySelector("use").setAttribute("transform", "translate(" + px(0) + " " + py(0) + ") scale(" + scale / 78 + ")");
+    place(sky.querySelector(".signal-antenna-caption"),px(0),py(-1.46));
+    while (orbits.length < 3) orbits.push(svg("path","signal-orbit"));
+    const ellipse = (cx,cy,rx,ry) => 'M' + (cx+rx) + ' ' + cy + 'a' + rx + ' ' + ry + ' 0 1 0 ' + (-2*rx) + ' 0a' + rx + ' ' + ry + ' 0 1 0 ' + (2*rx) + ' 0';
+    for (const [i,orbit] of orbits.entries()) orbit.setAttribute("d", ellipse(px(0),py(0),(2.25+i*1.86)*scale,(1.05+i*.87)*scale));
+    const selected = inspectedGroup(), active = activeGroup();
+    const hubs = groups.map((group,i) => {
+      const hub = layoutHub(i,groups.length);
+      const x=px(hub.x), y=py(hub.y), a=(hub.r+.47)*scale, b=a*.46;
+      place(group.planet,x,y);
+      group.planet.style.setProperty("--planet-size",2*hub.r*scale+"px");
+      group.orbit.setAttribute("d",ellipse(x,y,a,b));
+      group.channels.forEach((channel,index)=>{
+        const angle=index*tau/group.channels.length+i*.88+.45+orbitPhase*.057;
+        place(channel.dot,x+Math.cos(angle)*a,y-Math.sin(angle)*b);
       });
-      return { x: origin[0], y: origin[1], size, active: active === group, color: group.color, visible };
+      return {...hub, color:group.color, selected:group === selected};
     });
-    const hasSignal = reading.locked === true && active && (!focused || active.frequency === frequency);
-    transmission.forEach(path => { path.style.display = hasSignal ? "" : "none"; });
-    electric.hidden = !hasSignal;
-    if (hasSignal) {
-      const source = project(origins[groups.indexOf(active)]);
-      const bend = (source[1] + antenna[1]) / 2 - 8 * zoom;
-      const dy = (antenna[1] - source[1]) * height;
-      const dx = (antenna[0] - source[0]) * width;
-      const length = Math.hypot(dx, dy) || 1;
-      const trace = (t, offset = 0) => {
-        const rest = 1 - t;
-        const envelope = Math.sin(Math.PI * t);
-        const ripple = envelope * (Math.sin(t * 92 - phase * 8) * 1.25 + Math.sin(t * 183 + phase * 11) * .65);
-        const shift = ripple + offset;
-        return [
-          rest * source[0] + t * antenna[0] - dy / length * shift * 100 / width,
-          rest * rest * source[1] + 2 * rest * t * bend + t * t * antenna[1] + dx / length * shift * 100 / height,
-        ];
-      };
-      transmission.forEach((path, index) => {
-        const offset = [0, -1.35, 1.35, 0][index];
-        const points = Array.from({ length: 65 }, (_, n) => trace(n / 64, offset).map(value => value.toFixed(2)).join(" "));
-        path.setAttribute("d", "M" + points.join("L"));
-      });
-      pulses.forEach((pulse, index) => {
-        const t = motion.matches ? .26 + index * .24 : (phase * .63 + index / pulses.length + .09) % 1;
-        place(pulse, trace(t));
-        pulse.style.opacity = String(.26 + .74 * Math.sin(Math.PI * t));
+    const signal = connected && reading.locked === true && active ? hubs[groups.indexOf(active)] : null;
+    transmission.forEach(p => p.style.display = signal ? "" : "none");
+    electric.hidden = !signal;
+    if (signal) {
+      const tx = px(-.51), ty = py(.32);
+      const dx = -.51 - signal.x, dy = .32 - signal.y, distance = Math.hypot(dx,dy) || 1;
+      const x = px(signal.x + dx/distance*signal.r), y = py(signal.y + dy/distance*signal.r);
+      const mid = (y + ty)/2 + 12*zoom;
+      transmission.forEach(path => rfPath(path,[x,y],[tx,ty],mid));
+      pulses.forEach((pulse,i)=>{
+        const t=(phase*.20+i/3+.13)%1, s=1-t;
+        place(pulse, x+(tx-x)*t, s*s*y+2*s*t*mid+t*t*ty);
       });
     }
-    try {
-      scene?.({ width, height, hubs, camera: position, phase, accent });
-    } catch (error) {
-      scene = null;
-      console.warn("Signal analysis WebGL:", error);
-    }
-  }
-  function refreshAccent() {
-    accent = getComputedStyle(sky).getPropertyValue("--sky-accent").trim() || "#b5ec70";
+    setText("map-caption", f("Selecciona un planeta","Select a planet"));
+    try { scene?.({width,height,scale,panX,panY,hubs,phase}); }
+    catch(error) { scene=null;sky.classList.remove("iv-3d");console.warn("Signal atlas:",error); }
   }
   function schedule() {
-    if (!frame && opened && view === "universe" && visible && !motion.matches && !document.hidden) {
+    if (!frame && opened && view === "universe" && visible && !paused && !motion.matches && !document.hidden) {
       frame = requestAnimationFrame(animate);
     }
   }
   function animate(now) {
     frame = null;
-    if (!opened || view !== "universe" || !visible || motion.matches || document.hidden) {
+    if (!opened || view !== "universe" || !visible || paused || motion.matches || document.hidden) {
       previousTime = null;
       return;
     }
-    if (!previousTime || now - previousTime >= 30) {
+    if (!previousTime || now - previousTime >= (window.arkhamParallels ? 83 : 40)) {
       const delta = previousTime ? Math.min(now - previousTime, 60) / 1000 : 0;
       previousTime = now;
       phase += delta;
-      if (frequency === null && !flight && !sky.querySelector("button:hover, button:focus-visible")) {
-        revolution = (revolution + delta * .066) % tau;
-      }
+      if (!sky.matches(":hover") && !sky.contains(document.activeElement)) orbitPhase += delta;
       draw(now);
     }
     schedule();
@@ -499,13 +468,22 @@ function createSignalAnalysis({ api, tune }) {
       const result = await request;
       if (opened && connected && result.stream === stream && state?.stream?.id === stream) {
         reading = result;
+        const now = performance.now();
+        if (reading.locked && Number.isFinite(reading.cnr)) {
+          history = history.filter(point => point.time >= now - 30000);
+          history.push({time:now, value:reading.cnr});
+        } else history = [];
+        syncControls();
         renderReception();
-        if (motion.matches) draw(performance.now());
+        if (motion.matches || paused) draw();
       }
     } catch {
       if (opened && state?.stream?.id === stream) {
         reading = {};
+        history = [];
+        syncControls();
         renderReception();
+        draw();
       }
     } finally {
       request = null;
@@ -514,6 +492,7 @@ function createSignalAnalysis({ api, tune }) {
   function render(newState, pending) {
     if (newState.stream?.id !== state?.stream?.id || state?.hardware.signal !== newState.hardware.signal) {
       reading = {};
+      history = [];
       lastPoll = -Infinity;
     }
     state = newState;
@@ -528,12 +507,14 @@ function createSignalAnalysis({ api, tune }) {
     }
     syncControls();
     renderReception();
+    if (paused || motion.matches) draw();
     poll();
   }
   function disconnect() {
     if (!connected) return;
     connected = false;
     reading = {};
+    history = [];
     if (opened) {
       syncControls();
       renderReception();
@@ -548,7 +529,6 @@ function createSignalAnalysis({ api, tune }) {
       channelPicker.close();
       return;
     }
-    refreshAccent();
     if (!loadingScene) {
       loadingScene = import("./signal-scene.js").then(module => {
         scene = module.createSignalScene(sky, sky.querySelector(".signal-space"));
@@ -564,9 +544,36 @@ function createSignalAnalysis({ api, tune }) {
     schedule();
   }
   overview.addEventListener("click", resetUniverse);
+  el("motion").onclick = () => { paused = !paused; previousTime=null; syncControls(); draw(); schedule(); };
+  function changeZoom(delta) {
+    zoom = Math.max(.8, Math.min(1.6, Math.round((zoom + delta) * 10) / 10));
+    syncControls(); draw();
+  }
+  el("less").onclick = () => changeZoom(-.2);
+  el("more").onclick = () => changeZoom(.2);
+  const board = sky.closest(".atlas-board");
+  el("full").hidden = !board.requestFullscreen || !document.fullscreenEnabled;
+  el("full").onclick = () => {
+    const action = document.fullscreenElement ? document.exitFullscreen() : board.requestFullscreen();
+    action.catch(() => message(f("No se pudo abrir la pantalla completa.", "Could not open fullscreen.")));
+  };
+  sky.addEventListener("pointerdown", event => {
+    if (event.button || event.target.closest("button, a") || !groups.length) return;
+    drag = {x:event.clientX, y:event.clientY, panX, panY};
+    sky.setPointerCapture(event.pointerId);
+  });
+  sky.addEventListener("pointermove", event => {
+    if (!drag) return;
+    const scale = Math.min(sky.clientWidth/15,sky.clientHeight/8.5)*zoom;
+    panX = Math.max(-3,Math.min(3,drag.panX - (event.clientX-drag.x)/scale));
+    panY = Math.max(-1.75,Math.min(1.75,drag.panY + (event.clientY-drag.y)/scale));
+    draw();
+  });
+  sky.addEventListener("lostpointercapture", () => { drag=null; });
+  sky.addEventListener("atlas-redraw", draw);
   document.addEventListener("keydown", event => {
     if (!opened || view !== "universe" || event.key !== "Escape" || event.defaultPrevented) return;
-    if (frequency !== null && !event.target.closest("dialog, input, textarea, [contenteditable]")) {
+    if ((frequency !== null || zoom !== 1 || panX || panY) && !event.target.closest("dialog, input, textarea, [contenteditable]")) {
       event.preventDefault();
       resetUniverse();
     }
@@ -591,7 +598,6 @@ function createSignalAnalysis({ api, tune }) {
     schedule();
   }).observe(sky);
   new MutationObserver(() => {
-    refreshAccent();
     draw(performance.now());
   }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-palette", "data-mode"] });
   document.addEventListener("visibilitychange", () => { previousTime = null; schedule(); poll(); });

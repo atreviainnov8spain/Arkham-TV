@@ -1,0 +1,34 @@
+{
+  "version": "1.11",
+  "title": "Transcripciones e IA local",
+  "changes": [
+    [
+      "interfaz",
+      "Abre el Asistente de emisión junto a HDMI y pliégalo desde el borde derecho. Los controles de audio e imagen siguen junto al vídeo."
+    ],
+    [
+      "reproduccion",
+      "Whisper conserva el audio pendiente aunque la emisión tenga prioridad. En Apple Silicon usa Metal y vuelve a CPU si es necesario."
+    ],
+    [
+      "grabaciones",
+      "Transcribe una grabación desde su tarjeta y encuéntrala por su título y fecha en Transcripciones IA."
+    ],
+    [
+      "interfaz",
+      "Las respuestas pueden incluir secciones, tablas y gráficos con citas. Exporta la transcripción y las respuestas en Markdown o texto."
+    ],
+    [
+      "compatibilidad",
+      "Descarga los modelos por separado desde Configuración. El procesamiento se realiza en el Mac y da prioridad a la emisión y a las grabaciones."
+    ]
+  ],
+  "english": [
+    "Transcripts and local AI",
+    "Open the broadcast assistant next to HDMI and collapse it from the right edge. The audio and picture controls stay beside the video.",
+    "Whisper keeps pending audio even when broadcast playback takes priority. On Apple Silicon it uses Metal and falls back to CPU if needed.",
+    "Transcribe a recording from its card and find it by title and date in AI transcripts.",
+    "Replies can include sections, tables and charts with citations. Export transcripts and replies as Markdown or plain text.",
+    "Download each model separately in Settings. Processing runs on the Mac and gives priority to live playback and recordings."
+  ]
+}

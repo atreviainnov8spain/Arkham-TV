@@ -15,22 +15,25 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from native.changelog import release_version
+from native.local_ai import TOOLS as AI_TOOLS
 
 ARCHITECTURES = {"x86_64": 62, "aarch64": 183}
+DEBIAN_REVISION = 3
 ICON = ROOT / "assets/arkhamtv-icon.png"
 DESKTOP_ENTRY = ROOT / "linux/com.arkhamtv.desktop.desktop"
 
 
-def verify_elf(path, arch):
+def verify_elf(path, arch, *, static=True):
     with path.open("rb") as binary:
         header = binary.read(64)
-        if header[:6] != b"\x7fELF\x02\x01" or struct.unpack_from("<HH", header, 16) != (2, ARCHITECTURES[arch]):
+        elf_type, machine = struct.unpack_from("<HH", header, 16)
+        if header[:6] != b"\x7fELF\x02\x01" or machine != ARCHITECTURES[arch] or elf_type not in (2, 3):
             raise ValueError(f"{path.name} no es un ejecutable ELF de {arch}.")
         offset, = struct.unpack_from("<Q", header, 32)
         size, count = struct.unpack_from("<HH", header, 54)
         for i in range(count):
             binary.seek(offset + size * i)
-            if binary.read(4) == b"\x03\x00\x00\x00":
+            if static and binary.read(4) == b"\x03\x00\x00\x00":
                 raise ValueError(f"{path.name} depende de un cargador dinámico.")
 
 
@@ -46,12 +49,34 @@ def deb_member(member):
     return member
 
 
+def stage_release(directory):
+    release = json.loads((ROOT / "linux/release.json").read_text(encoding="utf-8"))
+    english = release.pop("english")
+    version = release["version"]
+    assets = directory / "assets"
+    shutil.copytree(ROOT / "assets", assets)
+    history = assets / "changelog.json"
+    translations = assets / "changelog.en.json"
+    previous = {item["version"]: item for item in json.loads(history.read_text())}
+    languages = json.loads(translations.read_text())
+    for archived in (ROOT / "linux/releases").glob("*.json"):
+        item = json.loads(archived.read_text())
+        languages[item["version"]] = item.pop("english")
+        previous[item["version"]] = item
+    previous.pop(version, None)
+    older = sorted(previous.values(), key=lambda item: tuple(map(int, item["version"].split("."))), reverse=True)
+    history.write_text(json.dumps([release, *older], ensure_ascii=False), encoding="utf-8")
+    translations.write_text(json.dumps({**languages, version: english}, ensure_ascii=False), encoding="utf-8")
+    (assets / "version.txt").write_text(version + "\n", encoding="ascii")
+    return release_version(directory)
+
+
 def package_deb(zig, work, executable, arch, version):
     (work / "debian-binary").write_bytes(b"2.0\n")
     control = work / "control"
     installed_size = sum((path.stat().st_size + 1023) // 1024 for path in (executable, DESKTOP_ENTRY, ICON))
     control.write_text(
-        f"Package: arkham-tv\nVersion: {version}\nArchitecture: {arch}\n"
+        f"Package: arkham-tv\nVersion: {version}-{DEBIAN_REVISION}\nArchitecture: {arch}\n"
         f"Installed-Size: {installed_size}\n"
         "Section: video\nPriority: optional\nMaintainer: Óscar Peña\n"
         "Depends: python3, python3-gi, gir1.2-gtk-3.0, gir1.2-gstreamer-1.0, "
@@ -77,9 +102,10 @@ def package_deb(zig, work, executable, arch, version):
     print(destination, flush=True)
 
 
-def package(args, arch, version):
+def package(args, arch):
     with tempfile.TemporaryDirectory(prefix="arkham-ubuntu-") as directory:
         work = Path(directory)
+        version = stage_release(work)
         environment = {**os.environ, "ZIG_GLOBAL_CACHE_DIR": str(args.media / "zig-cache"),
                        "ZIG_LOCAL_CACHE_DIR": str(work / "zig-cache")}
 
@@ -94,8 +120,9 @@ def package(args, arch, version):
         compile_elf("dvb.c", helper)
         payload = work / "payload.tar.gz"
         with tarfile.open(payload, "w:gz", compresslevel=5) as archive:
-            for name in ("app.py", "assets", "web", "native"):
+            for name in ("app.py", "web", "native"):
                 archive.add(ROOT / name, name, filter=archive_filter)
+            archive.add(work / "assets", "assets", filter=archive_filter)
             archive.add(ROOT / "linux/preparar.py", "preparar.py")
             archive.add(ROOT / "linux/desktop.py", "desktop.py")
             archive.add(helper, "bin/arkham-dvb")
@@ -103,6 +130,21 @@ def package(args, arch, version):
                 tool = args.media / arch / "bin" / name
                 verify_elf(tool, arch)
                 archive.add(tool, f"bin/{name}")
+            for name in AI_TOOLS:
+                tool = args.ai_helpers / arch / "bin" / name
+                verify_elf(tool, arch)
+                archive.add(tool, f"bin/{name}")
+            if arch == "x86_64":
+                for name in ("whisper-cli-avx2", "llama-completion-avx2"):
+                    tool = args.ai_helpers / arch / "bin" / name
+                    verify_elf(tool, arch)
+                    archive.add(tool, f"bin/{name}")
+            speech = args.ai_helpers / arch / "bin/sherpa"
+            verify_elf(speech / "bin/sherpa-onnx-offline", arch, static=False)
+            verify_elf(speech / "bin/sherpa-onnx-offline-speaker-diarization", arch, static=False)
+            archive.add(speech, "bin/sherpa", filter=archive_filter)
+            for name in ("whisper-LICENSE", "llama-LICENSE"):
+                archive.add(args.ai_helpers / name, f"sources/{name}")
             archive.add(args.ffmpeg_source, "sources/" + args.ffmpeg_source.name)
             archive.add(args.x264_source, "sources/" + args.x264_source.name)
             archive.add(ROOT / "linux", "sources/linux", filter=archive_filter)
@@ -137,12 +179,12 @@ def main():
     parser.add_argument("ffmpeg_source", type=Path)
     parser.add_argument("x264_source", type=Path)
     parser.add_argument("--arch", choices=ARCHITECTURES)
+    parser.add_argument("--ai-helpers", required=True, type=lambda value: Path(value).resolve())
     parser.add_argument("--output", type=Path, default=ROOT / "dist")
     args = parser.parse_args()
-    version = release_version(ROOT)
     args.output.mkdir(parents=True, exist_ok=True)
     for arch in (args.arch,) if args.arch else ARCHITECTURES:
-        package(args, arch, version)
+        package(args, arch)
 
 
 if __name__ == "__main__":

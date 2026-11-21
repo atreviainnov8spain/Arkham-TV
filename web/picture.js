@@ -1,7 +1,7 @@
 "use strict";
 
 function createPictureControls(video) {
-  if (!window.arkhamPicture) return;
+  if (!window.arkhamPicture) return () => {};
 
   const panel = document.getElementById("live-picture");
   const modes = [...panel.querySelectorAll("[data-picture-mode]")];
@@ -10,6 +10,7 @@ function createPictureControls(video) {
   const save = panel.querySelector(".picture-save");
   const feedback = panel.querySelector(".picture-feedback");
   const description = document.getElementById("picture-description");
+  const toggle = document.getElementById("picture-enabled");
   const renderPicture = createPictureRenderer(video, document.getElementById("picture-output"));
   const key = "arkhamtv.picture";
   const presets = {
@@ -22,8 +23,10 @@ function createPictureControls(video) {
 
   let mode = "standard";
   let saved = null;
+  let enabled = true;
   try {
     const settings = JSON.parse(localStorage.getItem(key));
+    if (window.arkhamLinux && settings?.enabled === false) enabled = false;
     if (settings && Object.hasOwn(presets, settings.mode)) mode = settings.mode;
     if (Array.isArray(settings?.personal) && settings.personal.length === controls.length &&
         settings.personal.every(value => Number.isInteger(value) && value >= 0 && value <= 100)) {
@@ -33,34 +36,45 @@ function createPictureControls(video) {
     // The controls are still available if storage is disabled.
   }
   function remember() {
-    localStorage.setItem(key, JSON.stringify({ mode, personal: saved }));
+    localStorage.setItem(key, JSON.stringify({ mode, personal: saved, enabled }));
   }
 
   function apply() {
     const [brightness, contrast, sharpness, color] = controls.map(input => input.valueAsNumber);
     renderPicture({
-      brightness: 1 + (brightness - 50) / 75,
-      contrast: 1 + (contrast - 50) / 75,
-      saturation: color / 50,
-      sharpness: sharpness / 130,
-      movie: mode === "movie",
+      brightness: enabled ? 1 + (brightness - 50) / 75 : 1,
+      contrast: enabled ? 1 + (contrast - 50) / 75 : 1,
+      saturation: enabled ? color / 50 : 1,
+      sharpness: enabled ? sharpness / 130 : 0,
+      movie: enabled && mode === "movie",
     });
     for (const input of controls) input.previousElementSibling.value = input.value;
   }
 
   function select(nextMode) {
     mode = nextMode;
-    const editing = mode === "personal";
+    const editing = enabled && mode === "personal";
+    for (const button of modes) button.disabled = !enabled;
     sliders.disabled = !editing;
     save.hidden = !editing;
     feedback.textContent = "";
-    description.textContent = arkhamLanguage.t(presets[mode].description);
+    description.textContent = enabled ? arkhamLanguage.t(presets[mode].description)
+      : arkhamLanguage.f("La emisión se muestra sin filtros de imagen.", "The broadcast is shown without picture filters.");
     modes.forEach(button => button.setAttribute("aria-pressed", String(button.dataset.pictureMode === mode)));
-    const values = editing ? saved || presets.standard.values : presets[mode].values;
+    const values = mode === "personal" ? saved || presets.standard.values : presets[mode].values;
     controls.forEach((input, index) => { input.value = values[index]; });
     apply();
   }
 
+  if (window.arkhamLinux) {
+    toggle.closest("label").hidden = false;
+    toggle.checked = enabled;
+    toggle.addEventListener("change", () => {
+      enabled = toggle.checked;
+      select(mode);
+      try { remember(); } catch {}
+    });
+  }
   for (const button of modes) {
     button.addEventListener("click", () => {
       select(button.dataset.pictureMode);
@@ -90,6 +104,7 @@ function createPictureControls(video) {
   select(mode);
   panel.closest("#live-layout").classList.add("has-picture-controls");
   panel.hidden = false;
+  return () => renderPicture.syncVisibility?.();
 }
 
 function createPictureRenderer(video, canvas) {
@@ -99,6 +114,8 @@ function createPictureRenderer(video, canvas) {
   let renderer;
   let frame = null;
   let processed = false;
+  const liveView = video.closest("#directo");
+  const visible = () => !document.hidden && !liveView?.hidden;
   let lastPaintTime = -Infinity;
   let lastMediaTime = -1;
   let frameInterval = 1000 / 30;
@@ -118,7 +135,7 @@ function createPictureRenderer(video, canvas) {
   }
 
   function repaint() {
-    if (!processed || !renderer || video.hidden || video.readyState < 2 || !video.videoWidth) return;
+    if (!processed || !renderer || !visible() || video.hidden || video.readyState < 2 || !video.videoWidth) return;
     try {
       const started = performance.now();
       renderer(video, settings);
@@ -134,7 +151,7 @@ function createPictureRenderer(video, canvas) {
   }
 
   function schedule() {
-    if (!processed || !renderer || frame !== null || video.paused || video.ended) return;
+    if (!processed || !renderer || !visible() || frame !== null || video.paused || video.ended) return;
     const next = now => {
       frame = null;
       if (useVideoFrames || (now - lastPaintTime >= frameInterval && video.currentTime !== lastMediaTime)) repaint();
@@ -181,6 +198,14 @@ function createPictureRenderer(video, canvas) {
     repaint();
     schedule();
   }
+  update.syncVisibility = () => {
+    if (!visible()) cancelFrame();
+    else {
+      repaint();
+      schedule();
+    }
+  };
+  document.addEventListener("visibilitychange", update.syncVisibility);
   return update;
 }
 
@@ -197,14 +222,6 @@ function createLinuxPictureRenderer(video, canvas) {
   sharpen.setAttribute("order", "3");
   sharpen.setAttribute("divisor", "1");
   sharpen.setAttribute("preserveAlpha", "true");
-  const tones = document.createElementNS(namespace, "feComponentTransfer");
-  for (const [channel, exponent] of [["R", 1.12], ["G", 1.13], ["B", 1.16]]) {
-    const curve = document.createElementNS(namespace, "feFunc" + channel);
-    curve.setAttribute("type", "gamma");
-    curve.setAttribute("amplitude", "1");
-    curve.setAttribute("exponent", String(exponent));
-    tones.append(curve);
-  }
   svg.append(filter);
   document.body.append(svg);
 
@@ -228,10 +245,8 @@ function createLinuxPictureRenderer(video, canvas) {
     if (contrast !== 1) effects.push(`contrast(${contrast})`);
     if (brightness !== 1) effects.push(`brightness(${brightness})`);
     if (saturation !== 1) effects.push(`saturate(${saturation})`);
-    if (movie) {
-      filter.replaceChildren(tones);
-      effects.push("url(#linux-picture-filter)");
-    }
+    // Basic color functions keep Movie out of the SVG filter path.
+    if (movie) effects.push("sepia(.18)");
     if (fullscreen) {
       fullscreen({ brightness, contrast, saturation, sharpness, movie }, effects.join(" "));
     } else {
@@ -276,7 +291,7 @@ function createFullscreenPictureRenderer(video, canvas, surface) {
 
   function sync() {
     const expanded = document.fullscreenElement === screen || screen.classList.contains("monitor-expanded");
-    const processing = expanded && Boolean(filter);
+    const processing = expanded && filter.includes("url(");
     surface.classList.toggle("has-picture-filter", !processing && Boolean(filter));
     surface.style.filter = processing ? "" : filter;
     if (processing && !video.hidden) {

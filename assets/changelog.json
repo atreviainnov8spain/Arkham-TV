@@ -4,7 +4,9 @@
     ["interfaz","En Linux, confirma el acceso al vídeo y al audio desde Entrada HDMI. El Snap necesita las conexiones de cámara y captura de audio."],
     ["reproduccion","Abre Entrada HDMI en En directo, elige el vídeo y el audio de la capturadora y sintoniza o cambia de canal con el mando del receptor."],
     ["grabaciones","Graba la entrada HDMI hasta 1080p con sonido estéreo o compártela en el móvil. El sintonizador USB sigue ofreciendo sus propias funciones de antena."],
-    ["interfaz","En macOS y Linux, En directo incorpora modos de imagen y un ajuste personal para brillo, contraste, nitidez y color."]
+    ["interfaz","En macOS y Linux, En directo incorpora modos de imagen y un ajuste personal para brillo, contraste, nitidez y color. Estándar reproduce la imagen capturada sin aplicar filtros."],
+    ["grabaciones","En macOS y Linux, el archivo muestra un fotograma de cada vídeo guardado. Abre la grabación desde su miniatura y usa el botón de pantalla completa. Pulsa Esc para volver al tamaño normal."],
+    ["reproduccion","En macOS, volver a En directo conserva la reproducción cuando la imagen avanza con normalidad y recupera la emisión si el vídeo se ha quedado atrás."]
   ]},
   {"version":"1.9","title":"Invisible TV · Análisis de señal y Teletexto","changes":[
     ["interfaz","En macOS y Linux, explora las frecuencias sintonizadas como planetas en 3D y acércate para ver sus canales. El canal en directo se distingue por su brillo."],

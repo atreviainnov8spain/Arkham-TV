@@ -1,0 +1,34 @@
+{
+  "version": "1.11",
+  "title": "Transcripciones locales y reproducción más ligera",
+  "changes": [
+    [
+      "interfaz",
+      "Desactiva los ajustes de imagen o el ecualizador con sus interruptores en En directo. Puedes volver a activarlos conservando tus ajustes."
+    ],
+    [
+      "reproduccion",
+      "El modo Película usa un filtro de color más ligero y Estándar conserva la imagen original."
+    ],
+    [
+      "grabaciones",
+      "Transcribe un archivo desde su tarjeta en Grabaciones. El resultado aparece con su título y origen en Transcripciones IA."
+    ],
+    [
+      "reproduccion",
+      "El audio pendiente se conserva en una cola local y se procesa por orden. La IA deja de esperar indefinidamente por los contadores de WebKitGTK."
+    ],
+    [
+      "compatibilidad",
+      "Intel y AMD usan motores AVX2 cuando el procesador los admite. Los equipos anteriores y ARM64 conservan su motor compatible. La emisión y las grabaciones tienen prioridad."
+    ]
+  ],
+  "english": [
+    "Local transcripts and lighter playback",
+    "Turn picture adjustments or the equalizer off independently in Live. Your settings are kept for when you turn them back on.",
+    "Movie uses a lighter color filter and Standard keeps the original picture.",
+    "Transcribe a file from its card in Recordings. The result appears with its title and source in AI transcripts.",
+    "Pending audio is kept in a local queue and processed in order. WebKitGTK frame counters no longer keep AI waiting indefinitely.",
+    "Intel and AMD use AVX2 engines when supported by the processor. Older computers and ARM64 retain compatible engines. Playback and recordings have priority."
+  ]
+}

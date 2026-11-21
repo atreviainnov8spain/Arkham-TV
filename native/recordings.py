@@ -1,6 +1,7 @@
 """Local recording settings, programme schedule and MP4 output."""
 
 from datetime import datetime
+from hashlib import sha256
 import json
 import os
 from pathlib import Path
@@ -28,6 +29,7 @@ class RecordingError(Exception):
 class Recordings:
     def __init__(self, data, default_folder):
         self.path = data / "grabaciones.json"
+        self.thumbnails = data / "miniaturas"
         self.default_folder = default_folder
         self.folder = default_folder
         self.jobs = []
@@ -93,17 +95,38 @@ class Recordings:
             raise RecordingError("La ruta de la grabación no es válida.")
         return path
 
-    def open_video(self, identifier):
+    def playable_path(self, identifier):
         job = next((item for item in self.jobs if item["id"] == identifier and item["state"] in {"done", "error"}), None)
         path = self.file_path(job) if job else None
         if path is None:
             raise FileNotFoundError
+        return path
+
+    def open_video(self, identifier):
+        path = self.playable_path(identifier)
         handle = os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK), "rb")
         info = os.fstat(handle.fileno())
         if not stat.S_ISREG(info.st_mode):
             handle.close()
             raise FileNotFoundError
         return handle, info.st_size
+
+    def thumbnail_source(self, identifier):
+        path = self.playable_path(identifier)
+        info = path.lstat()
+        if not stat.S_ISREG(info.st_mode) or not info.st_size:
+            raise FileNotFoundError
+        key = sha256(repr((path, info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns)).encode()).hexdigest()[:24]
+        return path, self.thumbnails / f"{identifier}-{key}.jpg"
+
+    def clear_thumbnails(self, identifier, *, keep=None):
+        if re.fullmatch(r"[0-9a-f]{16}", identifier):
+            for path in self.thumbnails.glob(f"{identifier}-*.jpg"):
+                if path != keep:
+                    try:
+                        path.unlink(missing_ok=True)
+                    except OSError:
+                        pass
 
     def delete(self, identifier):
         job = next((item for item in self.jobs if item["id"] == identifier), None)
@@ -129,6 +152,7 @@ class Recordings:
             raise
         if staged is not None:
             staged.unlink()
+        self.clear_thumbnails(identifier)
 
     def reserve(self, job):
         folder = Path(job["folder"])

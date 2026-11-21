@@ -21,6 +21,7 @@
   <script src="/program.js" defer></script>
   <script src="/playback.js" defer></script>
   <script src="/recordings.js" defer></script>
+  <!-- LOCAL_AI_ASSETS -->
   <!-- SIGNAL_ASSETS -->
   <script src="/tv.js" defer></script>
   <script src="/qrcode.js" defer></script>
@@ -40,6 +41,12 @@
     </symbol>
     <symbol id="i-signal-book" viewBox="0 0 24 24"><path d="M12 20V6M3 5a11 11 0 0 1 9 2 11 11 0 0 1 9-2v14a11 11 0 0 0-9 2 11 11 0 0 0-9-2zM6 9l3 1m-3 3 3 1m6-4 3-1m-3 5 3-1"/></symbol>
     <symbol id="i-rail-toggle" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+    <symbol id="i-ai-time" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-ai-clear" viewBox="0 0 24 24"><path d="m14 3 7 7-10 10H6l-4-4zm-7 8 7 7M11 20h10"/></symbol>
+    <symbol id="i-ai-voices" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m1 3a5 5 0 0 1 4 5v1"/></symbol>
+    <symbol id="i-ai-send" viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></symbol>
+    <symbol id="i-ai-transcript" viewBox="0 0 24 24"><path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h1zm7 0v5h5M8 14h1.5l1.3-2.5 2.4 5 1.4-2.5H16"/></symbol>
+    <symbol id="i-ai-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v6m4-6v6"/></symbol>
     <symbol id="i-signal-back" viewBox="0 0 24 24"><path d="m11 6-6 6 6 6m-6-6h14"/></symbol>
     <symbol id="i-signal-flows" viewBox="0 0 24 24"><path d="M3 19h18M6 15v-4m6 4V5m6 10V8"/></symbol>
     <symbol id="i-signal-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5zm-9 9 9 5 9-5M3 16l9 5 9-5"/></symbol>
@@ -58,6 +65,9 @@
       <path d="M4 26h12l5-8 7 15 6-11 4 4h20M50 17a12 12 0 0 1 0 18m5-22a17 17 0 0 1 0 26" />
       <circle cx="41" cy="26" r="3" fill="currentColor"/>
     </symbol>
+    <symbol id="i-atlas-more" viewBox="0 0 24 24"><path d="M5 12h14m-7-7v14"/></symbol>
+    <symbol id="i-atlas-less" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-atlas-center" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></symbol>
     <symbol id="i-orbit" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5"/><ellipse cx="12" cy="12" rx="10" ry="5.5" transform="rotate(-35 12 12)"/><path d="M5.7 13.5h.01M18 7.5h.01"/></symbol>
     <symbol id="i-antenna" viewBox="0 0 24 24">
       <path d="M5 5a10 10 0 0 0 0 14m14 0a10 10 0 0 0 0-14M8 8a6 6 0 0 0 0 8m8 0a6 6 0 0 0 0-8M12 14v7m-3 0h6"/>
@@ -66,6 +76,7 @@
     <symbol id="i-color" viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 1 9-9c0 2-1 3-3 3h-2a2 2 0 0 0-2 2c0 1 1 1 1 2 0 1-1 2-3 2Z"/><path d="M7 12h.01M10 8h.01m5 0h.01m3 3h.01"/></symbol>
     <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></symbol>
     <symbol id="i-expand" viewBox="0 0 24 24"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/></symbol>
+    <symbol id="i-contract" viewBox="0 0 24 24"><path d="M4 9h5V4m11 5h-5V4M4 15h5v5m11-5h-5v5"/></symbol>
     <symbol id="i-restore-window" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 8h18M9 15l5-4m-4 0h4v4"/></symbol>
     <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7z"/></symbol>
     <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5v14m6-14v14"/></symbol>
@@ -109,6 +120,7 @@
         <a href="#sintonizador" class="nav-link"><svg aria-hidden="true"><use href="#i-tuner"/></svg><span>Sintonizador</span></a>
         <a href="#analisis" id="signal-nav" class="nav-link" hidden><svg aria-hidden="true"><use href="#i-orbit"/></svg><span data-en="Signal analysis">Análisis de señal</span></a>
         <a href="#grabaciones" class="nav-link"><svg aria-hidden="true"><use href="#i-record"/></svg><span>Grabaciones</span></a>
+        <a href="#transcripciones" class="nav-link" id="ai-nav" hidden><svg aria-hidden="true"><use href="#i-signal-captions"/></svg><span data-en="AI transcripts">Transcripciones IA</span></a>
         <a href="#configuracion" class="nav-link"><svg aria-hidden="true"><use href="#i-settings"/></svg><span>Configuración</span></a>
         <div class="nav-secondary">
           <a href="#changelog" class="nav-link"><svg aria-hidden="true"><use href="#i-history"/></svg><span>Changelog</span></a>
@@ -226,10 +238,13 @@
             <div class="player-meta">
               <div><p id="channel-name">Televisión en directo</p><p id="channel-frequency">Señal de antena · TDT</p></div>
               <div class="player-actions">
-                <button type="button" id="hdmi-open" class="button secondary" aria-haspopup="dialog" aria-controls="hdmi-dialog" data-hdmi-open hidden>
+                <button type="button" id="hdmi-open" class="button secondary" title="Entrada HDMI" aria-haspopup="dialog" aria-controls="hdmi-dialog" data-hdmi-open hidden>
                   <svg aria-hidden="true"><use href="#i-hdmi"/></svg><span data-en="HDMI input">Entrada HDMI</span>
                 </button>
-                <button type="button" id="mobile-share-open" class="button secondary" aria-haspopup="dialog" aria-controls="mobile-share" disabled>
+                <button type="button" id="ai-open" class="button secondary" aria-expanded="false" aria-controls="ai-dock-body" hidden>
+                  <svg aria-hidden="true"><use href="#i-signal-captions"/></svg><span>Asistente IA</span>
+                </button>
+                <button type="button" id="mobile-share-open" class="button secondary" title="Ver en el móvil" aria-haspopup="dialog" aria-controls="mobile-share" disabled>
                   <svg aria-hidden="true"><use href="#i-phone"/></svg><span>Ver en el móvil</span>
                 </button>
                 <button type="button" id="live-audio" class="button secondary" aria-haspopup="dialog" aria-controls="capture-options" title="Elegir pista de audio" disabled hidden>
@@ -316,6 +331,11 @@
           </aside>
           <aside class="eq-preview panel" aria-labelledby="eq-preview-title">
             <div class="section-head"><h2 id="eq-preview-title">Ecualización</h2><span class="soft-tag" id="eq-preview-profile">Flat</span></div>
+            <label class="effect-toggle" hidden>
+              <input class="visually-hidden" type="checkbox" role="switch" data-eq-enabled checked>
+              <span class="effect-switch" aria-hidden="true"><span><svg><use href="#i-check"/></svg></span></span>
+              <span data-en="Apply equalizer">Aplicar ecualizador</span>
+            </label>
             <p class="eq-preview-state" id="eq-preview-state">Sin ecualización</p>
             <div id="eq-preview-chart" class="eq-preview-chart"></div>
             <div class="eq-preview-scale" aria-hidden="true"><span>31 Hz</span><span>1 kHz</span><span>16 kHz</span></div>
@@ -335,6 +355,11 @@
               <h2 id="picture-title" data-en="Picture">Imagen</h2>
             </header>
             <div class="picture-body">
+              <label class="effect-toggle" hidden>
+                <input class="visually-hidden" type="checkbox" role="switch" id="picture-enabled" checked>
+                <span class="effect-switch" aria-hidden="true"><span><svg><use href="#i-check"/></svg></span></span>
+                <span data-en="Apply picture adjustments">Aplicar ajustes de imagen</span>
+              </label>
               <fieldset class="picture-modes">
                 <legend data-en="Picture mode">Modo de imagen</legend>
                 <div class="studio-switch">
@@ -424,6 +449,11 @@
         <div class="intro"><p class="eyebrow">ESTUDIO DE AUDIO</p><h1 id="equalizer-title">Ecualizador</h1></div>
         <form class="eq-panel panel" id="eq-form">
           <div class="section-head"><h2>10 bandas <small class="eq-units">±12 dB</small></h2><span class="soft-tag" id="eq-active">Activo · Flat</span></div>
+          <label class="effect-toggle" hidden>
+            <input class="visually-hidden" type="checkbox" role="switch" data-eq-enabled checked>
+            <span class="effect-switch" aria-hidden="true"><span><svg><use href="#i-check"/></svg></span></span>
+            <span data-en="Apply equalizer">Aplicar ecualizador</span>
+          </label>
           <div class="eq-presets" id="eq-presets" role="group" aria-label="Preajustes de ecualización"></div>
           <p class="eq-description" id="eq-description"></p>
           <fieldset class="eq-controls" id="eq-controls" aria-label="Ganancia por frecuencia"></fieldset>
@@ -637,10 +667,11 @@
               </div>
             </div>
             <p id="signal-feedback" class="signal-feedback" role="status" hidden></p>
-            <div class="signal-world">
-              <button type="button" id="signal-overview" class="button signal-overview" aria-keyshortcuts="Escape" hidden>
-                <svg aria-hidden="true"><use href="#i-signal-back"/></svg><span data-en="Back to the universe">Volver al universo</span>
-              </button>
+            <div class="atlas-board">
+            <div class="signal-world" data-dots>
+              <div class="atlas-maphead"><span><svg aria-hidden="true"><use href="#i-orbit"/></svg><b data-en="Orbital map">Mapa orbital</b></span>
+                <div class="atlas-controls"><button type="button" id="signal-motion" title="Pausar movimiento" aria-label="Pausar movimiento" data-en-aria-label="Pause motion" data-en-title="Pause motion"><svg aria-hidden="true"><use href="#i-pause"/></svg></button><button type="button" id="signal-less" title="Alejar" aria-label="Alejar" data-en-aria-label="Zoom out" data-en-title="Zoom out"><svg aria-hidden="true"><use href="#i-atlas-less"/></svg></button><button type="button" id="signal-more" title="Acercar" aria-label="Acercar" data-en-aria-label="Zoom in" data-en-title="Zoom in"><svg aria-hidden="true"><use href="#i-atlas-more"/></svg></button><button type="button" id="signal-overview" title="Restablecer vista" aria-label="Restablecer vista" data-en-aria-label="Reset view" data-en-title="Reset view"><svg aria-hidden="true"><use href="#i-atlas-center"/></svg></button><button type="button" id="signal-full" title="Pantalla completa" aria-label="Pantalla completa" data-en-aria-label="Full screen" data-en-title="Full screen"><svg aria-hidden="true"><use href="#i-expand"/></svg></button></div>
+              </div>
               <svg class="signal-links" aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
               <div class="signal-space" aria-hidden="true"></div>
               <div id="signal-electric" class="signal-electric" aria-hidden="true" hidden></div>
@@ -654,10 +685,22 @@
               <div class="signal-planets" aria-label="Frecuencias encontradas"></div>
               <div class="signal-satellites"></div>
               <span class="signal-antenna-caption" data-en="Your antenna">Tu antena</span>
+              <div class="atlas-legend" aria-hidden="true"><span data-en="Frequency">Frecuencia</span><span data-en="Channel">Canal</span><span data-en="Reception">Recepción</span></div>
               <span class="signal-map-caption" id="signal-map-caption" aria-live="polite"></span>
               <div class="signal-empty" id="signal-empty" hidden><a href="#sintonizador" data-en="Scan for channels to explore their signal.">Sintoniza canales para explorar su señal.</a></div>
             </div>
-            <div class="signal-choices" id="signal-choices" hidden></div>
+            <aside class="atlas-inspector">
+              <span class="atlas-field" data-en="Selected frequency">Frecuencia seleccionada</span>
+              <h3 id="signal-atlas-uhf">—</h3>
+              <div class="atlas-meta"><span id="signal-atlas-mhz">—</span><span id="signal-atlas-status"></span></div>
+              <h4 data-en="Channels on this frequency">Canales de la frecuencia</h4>
+              <div class="signal-choices" id="signal-choices"></div>
+              <div class="atlas-meter"><div><span data-en="Carrier-to-noise ratio">Relación señal/ruido</span><strong id="signal-atlas-cnr">—</strong></div>
+                <svg viewBox="0 0 240 36" preserveAspectRatio="none" aria-hidden="true"><path d="M0 8H240M0 20H240M0 32H240" class="atlas-grid"/><path id="signal-atlas-trace"/></svg>
+              </div>
+            </aside>
+            </div>
+            <div class="atlas-rail" id="signal-atlas-rail"><h3 data-en="UHF frequencies">Frecuencias UHF</h3><div id="signal-atlas-bands"></div></div>
             <p class="signal-reception" id="signal-reception" role="status"></p>
             <dl class="signal-metrics">
               <div><dt data-en="Network · TSID">Red · TSID</dt><dd id="signal-network">—</dd></div>
@@ -729,9 +772,29 @@
           <h1 id="recorded-title" tabindex="-1">Grabación</h1>
         </div>
         <div class="viewer" aria-label="Reproductor de grabaciones">
-          <div class="screen">
+          <div class="screen" id="recorded-screen">
             <video id="recorded-video" controls playsinline preload="metadata" aria-label="Grabación"></video>
             <span class="screen-tag"><svg aria-hidden="true"><use href="#i-record"/></svg> GRABACIÓN</span>
+            <button type="button" id="recorded-fullscreen" class="fullscreen" aria-label="Pantalla completa" hidden>
+              <svg aria-hidden="true"><use href="#i-expand"/></svg>
+            </button>
+            <div class="monitor-controls" id="recorded-controls" hidden>
+              <div class="recorded-transport">
+                <button type="button" class="monitor-control" id="recorded-play" aria-label="Reproducir">
+                  <svg aria-hidden="true"><use href="#i-play"/></svg>
+                </button>
+                <input type="range" id="recorded-progress" min="0" max="0" step="any" value="0" aria-label="Posición de reproducción" data-en-aria-label="Playback position">
+                <span id="recorded-time" aria-hidden="true">0:00</span>
+              </div>
+              <div class="monitor-volume">
+                <div class="monitor-slider">
+                  <input type="range" id="recorded-volume" min="0" max="100" value="100" aria-label="Volumen" aria-orientation="vertical">
+                </div>
+                <button type="button" class="monitor-control" id="recorded-sound" aria-label="Silenciar">
+                  <svg aria-hidden="true"><use href="#i-volume"/></svg>
+                </button>
+              </div>
+            </div>
           </div>
           <div class="player-meta recording-player-meta">
             <div>
@@ -749,8 +812,39 @@
           </div>
         </div>
       </section>
+      <section id="transcripciones" aria-labelledby="ai-library-title" hidden>
+        <div class="intro"><p class="eyebrow" data-en="LOCAL ARCHIVE">ARCHIVO LOCAL</p><h1 id="ai-library-title" tabindex="-1" data-en="AI transcripts">Transcripciones IA</h1></div>
+        <p id="ai-library-status" class="feedback" role="status"></p>
+        <div id="ai-library" class="ai-library"></div>
+      </section>
       <section id="configuracion" aria-labelledby="settings-title" hidden>
         <div class="intro"><p class="eyebrow">PREFERENCIAS DE REPRODUCCIÓN</p><h1 id="settings-title">Configuración</h1></div>
+        <section id="ai-models" class="settings-card panel ai-models" aria-labelledby="ai-models-title" hidden>
+          <div class="tuner-summary"><div class="tuner-icon"><svg aria-hidden="true"><use href="#i-eq"/></svg></div>
+            <div><h2 id="ai-models-title" data-en="Local AI models">Modelos de IA local</h2>
+              <p data-en="Download the models you need. Audio, transcripts and questions stay on this device.">Descarga los modelos que necesites. El audio, las transcripciones y las consultas se quedan en este equipo.</p></div>
+          </div>
+          <div id="ai-model-list"></div>
+          <div id="ai-speakers-models" class="ai-model-row" hidden>
+            <div class="ai-model-family"><strong data-en="Recording speakers">Voces de grabaciones</strong>
+              <small data-en="Local speaker separation. You can name each voice afterwards.">Separación local de hablantes. Puedes poner nombre a cada voz después.</small>
+              <small id="ai-speakers-state"></small>
+            </div>
+            <label class="effect-toggle">
+              <input id="ai-speakers-enabled" type="checkbox" role="switch" class="visually-hidden" disabled>
+              <span class="effect-switch" aria-hidden="true"><span><svg><use href="#i-check"/></svg></span></span>
+              <span data-en="Separate voices in recordings">Separar voces de grabaciones</span>
+            </label>
+            <div class="ai-model-actions">
+              <button type="button" class="button primary" data-ai-action="download-speakers" data-en="Download models">Descargar modelos</button>
+              <button type="button" class="button secondary" data-ai-action="cancel-speakers" data-en="Cancel download" hidden>Cancelar descarga</button>
+              <button type="button" class="button secondary" data-ai-action="remove-speakers" data-en="Remove models" hidden>Quitar modelos</button>
+            </div>
+            <progress id="ai-speakers-progress" class="ai-speakers-progress" aria-label="Descarga de modelos de voces" hidden></progress>
+          </div>
+          <p class="ai-model-hint" data-en="Sizes are for downloads. Larger models need more memory and may respond more slowly. Changing models applies to the next transcription or chat request.">Los tamaños indican el peso de descarga. Los modelos más grandes necesitan más memoria y pueden tardar más. El cambio se aplica a la próxima transcripción o consulta.</p>
+          <p id="ai-model-note" class="feedback" role="status"></p>
+        </section>
         <div class="settings-card panel">
           <div class="tuner-summary">
             <div class="tuner-icon"><svg aria-hidden="true"><use href="#i-volume"/></svg></div>
@@ -876,7 +970,112 @@
         <span id="footer-tuner">Sintonizador TDT</span>
       </footer>
     </main>
+    <aside id="ai-dock" aria-label="Asistente de emisión" data-en-aria-label="Broadcast assistant" hidden>
+      <button id="ai-dock-toggle" type="button" aria-expanded="false" aria-controls="ai-dock-body">
+        <svg aria-hidden="true"><use href="#i-rail-toggle"/></svg>
+      </button>
+      <div id="ai-dock-indicator" aria-hidden="true">
+        <svg><use href="#i-signal-captions"/></svg><span class="status-dot" hidden></span>
+      </div>
+      <div id="ai-dock-body" hidden>
+        <header class="ai-head">
+          <div class="ai-heading"><span class="tuner-icon"><svg aria-hidden="true"><use href="#i-eq"/></svg></span>
+            <div><h2 id="ai-heading">Asistente de emisión</h2><p data-en="Local AI · Arkham TV audio">IA local · Audio de Arkham TV</p></div>
+          </div>
+          <span id="ai-source-caption" class="ai-source-caption" data-en="Chat source">Fuente del chat</span>
+          <details id="ai-source" class="language-control ai-source-control">
+            <summary class="button secondary" aria-labelledby="ai-source-caption ai-source-value" aria-controls="ai-source-options">
+              <svg aria-hidden="true"><use href="#i-signal-captions"/></svg>
+              <span id="ai-source-value" data-en="Choose a source">Elige una fuente</span>
+              <svg class="language-chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+            </summary>
+            <div id="ai-source-options" class="choice-panel language-panel" role="group" aria-labelledby="ai-source-caption"></div>
+          </details>
+          <div class="ai-indicators">
+            <span id="ai-session-status" role="status"></span>
+            <span class="ai-wave" aria-hidden="true" hidden></span>
+            <time id="ai-elapsed"></time>
+          </div>
+          <button id="ai-start" type="button" class="button primary" data-ai-action="start" hidden>
+            <svg aria-hidden="true"><use href="#i-signal-captions"/></svg>
+            <span data-en="Start transcription">Iniciar transcripción</span>
+          </button>
+        </header>
+        <div class="studio-switch ai-tabs" role="group" aria-label="Vistas del asistente" data-en-aria-label="Assistant views">
+          <button type="button" data-ai-tab="transcript" aria-pressed="true" data-en="Transcript">Transcripción</button>
+          <button type="button" data-ai-tab="chat" aria-pressed="false" data-en="Chat">Chat</button>
+        </div>
+        <div id="ai-content" class="ai-content"></div>
+        <div id="ai-compose" hidden>
+          <div class="ai-shortcuts">
+            <button class="button secondary" type="button" data-ai-action="summary" data-en="Summary">Resumen</button>
+            <button class="button secondary" type="button" data-ai-action="analysis" data-en="Analysis">Análisis</button>
+            <button class="button secondary" type="button" data-ai-action="report" data-en="Report">Informe</button>
+          </div>
+          <form id="ai-form">
+            <input id="ai-question" type="text" maxlength="600" autocomplete="off" aria-label="Pregunta sobre la transcripción" data-en-aria-label="Ask about the transcript" placeholder="Pregunta sobre lo dicho…" data-en-placeholder="Ask about what was said…">
+            <button type="submit" class="button primary" aria-label="Enviar pregunta" data-en-aria-label="Send question">
+              <svg aria-hidden="true"><use href="#i-ai-send"/></svg>
+            </button>
+          </form>
+        </div>
+        <div id="ai-session-actions" class="ai-session-actions"></div>
+        <p id="ai-error" class="feedback" role="status"></p>
+      </div>
+    </aside>
   </div>
+  <dialog id="ai-export" class="ai-export panel" aria-labelledby="ai-export-title">
+    <div class="section-head"><h2 id="ai-export-title" data-en="Export transcript">Exportar transcripción</h2>
+      <form method="dialog"><button type="submit" class="button secondary" aria-label="Cerrar" data-en-aria-label="Close"><svg aria-hidden="true"><use href="#i-close"/></svg></button></form>
+    </div>
+    <div class="ai-export-fields">
+      <span id="ai-export-format-caption" data-en="Format">Formato</span>
+      <details id="ai-export-format" class="language-control">
+        <summary class="button secondary" aria-labelledby="ai-export-format-caption ai-export-format-label" aria-controls="ai-export-format-options">
+          <svg aria-hidden="true"><use href="#i-ai-transcript"/></svg>
+          <span id="ai-export-format-label">Markdown (.md)</span>
+          <svg class="language-chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+        </summary>
+        <div id="ai-export-format-options" class="choice-panel language-panel" role="group" aria-labelledby="ai-export-format-caption">
+          <button type="button" class="choice-option" data-export-format="md" aria-current="true"><span>Markdown (.md)</span><svg aria-hidden="true"><use href="#i-check"/></svg></button>
+          <button type="button" class="choice-option" data-export-format="txt"><span data-en="Text (.txt)">Texto (.txt)</span><svg aria-hidden="true"><use href="#i-check"/></svg></button>
+        </div>
+      </details>
+      <label class="effect-toggle ai-export-check">
+        <input class="visually-hidden" type="checkbox" role="switch" id="ai-export-include" checked>
+        <span class="effect-switch" aria-hidden="true"><span><svg><use href="#i-check"/></svg></span></span>
+        <span data-en="Include AI responses">Incluir respuestas de IA</span>
+      </label>
+      <label id="ai-export-times-field" class="effect-toggle ai-export-times" hidden>
+        <input class="visually-hidden" type="checkbox" role="switch" id="ai-export-times">
+        <span class="effect-switch" aria-hidden="true"><span><svg><use href="#i-check"/></svg></span></span>
+        <span data-en="Include timestamps">Incluir marcas de tiempo</span>
+      </label>
+    </div>
+    <textarea id="ai-export-preview" readonly aria-label="Vista previa del texto exportado" data-en-aria-label="Export preview"></textarea>
+    <p id="ai-export-error" class="feedback" role="status"></p>
+    <div class="ai-export-actions"><button id="ai-export-save" type="button" class="button primary" data-en="Save file…">Guardar archivo…</button></div>
+  </dialog>
+  <dialog id="ai-delete" class="ai-export panel" aria-labelledby="ai-delete-title" aria-describedby="ai-delete-copy">
+    <h2 id="ai-delete-title" data-en="Delete transcript">Eliminar transcripción</h2>
+    <p id="ai-delete-copy"></p>
+    <form method="dialog" class="ai-export-actions">
+      <button class="button secondary" value="cancel" data-en="Cancel" autofocus>Cancelar</button>
+      <button class="button secondary recording-delete" value="delete" data-en="Delete">Eliminar</button>
+    </form>
+  </dialog>
+  <dialog id="ai-voice-rename" class="ai-export panel" aria-labelledby="ai-voice-rename-title">
+    <h2 id="ai-voice-rename-title" data-en="Name this voice">Nombre de esta voz</h2>
+    <form method="dialog" class="ai-voice-form">
+      <label><span data-en="Name or character">Nombre o personaje</span>
+        <input id="ai-voice-name" type="text" maxlength="60" autocomplete="off" autofocus>
+      </label>
+      <div class="ai-export-actions">
+        <button type="submit" class="button secondary" value="cancel" data-en="Cancel">Cancelar</button>
+        <button type="submit" class="button primary" value="save" data-en="Save name">Guardar nombre</button>
+      </div>
+    </form>
+  </dialog>
   <dialog id="mobile-share" aria-labelledby="mobile-share-title" aria-describedby="mobile-share-copy">
     <div class="mobile-share-body">
       <form method="dialog"><button class="button secondary mobile-share-close" aria-label="Cerrar" autofocus><svg aria-hidden="true"><use href="#i-close"/></svg></button></form>

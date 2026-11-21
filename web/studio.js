@@ -21,18 +21,22 @@ function createAudioStudio({ api, action, video, playingStream, playbackDate }) 
   let edit = false;
   let busy = false;
   let ready = false;
+  let enabled = true;
+  const toggles = window.arkhamLinux ? [...document.querySelectorAll("[data-eq-enabled]")] : [];
+  const offLabel = arkhamLanguage.f("Desactivado", "Off");
 
   function drawPreview() {
-    const activePreset = profile(saved)?.[0] || arkhamLanguage.t("Personalizado");
+    const gains = enabled ? saved : presets[0][2];
+    const activePreset = profile(gains)?.[0] || arkhamLanguage.t("Personalizado");
     const flat = activePreset === "Flat";
-    el("eq-preview-profile").textContent = activePreset;
+    el("eq-preview-profile").textContent = enabled ? activePreset : offLabel;
     el("eq-preview-state").textContent = flat ? arkhamLanguage.t("Sin ecualización") : arkhamLanguage.t("Curva aplicada a la emisión");
     const svgNS = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(svgNS, "svg");
     svg.setAttribute("viewBox", "0 0 210 66");
     svg.setAttribute("role", "img");
     svg.setAttribute("aria-label", flat ? arkhamLanguage.t("Todas las bandas en 0 decibelios") :
-      bands.map((hz, index) => hz + (arkhamLanguage.language === "en" ? " hertz: " : " hercios: ") + signed(saved[index]) + " dB").join(", "));
+      bands.map((hz, index) => hz + (arkhamLanguage.language === "en" ? " hertz: " : " hercios: ") + signed(gains[index]) + " dB").join(", "));
     const path = (className, points) => {
       const line = document.createElementNS(svgNS, "path");
       line.setAttribute("class", className);
@@ -41,7 +45,7 @@ function createAudioStudio({ api, action, video, playingStream, playbackDate }) 
     };
     path("eq-preview-grid", "M0 8H210 M0 58H210");
     path("eq-preview-zero", "M0 33H210");
-    const points = saved.map((gain, index) => [10 + index * 21, 33 - gain * 2.05]);
+    const points = gains.map((gain, index) => [10 + index * 21, 33 - gain * 2.05]);
     points.forEach(([x, y]) => path("eq-preview-band", "M" + x + " 33V" + y));
     path(flat ? "eq-preview-flat" : "eq-preview-line", "M" + points.map(pair => pair.join(" ")).join("L"));
     for (const [x, y] of points) {
@@ -90,7 +94,9 @@ function createAudioStudio({ api, action, video, playingStream, playbackDate }) 
     const chosen = profile(draft);
     presetButtons.forEach((button, index) => button.setAttribute("aria-pressed", String(presets[index] === chosen)));
     el("eq-description").textContent = chosen?.[1] || arkhamLanguage.t("Ajuste personalizado por frecuencia.");
-    el("eq-active").textContent = (arkhamLanguage.language === "en" ? "Active · " : "Activo · ") + (profile(saved)?.[0] || arkhamLanguage.t("Personalizado"));
+    el("eq-active").textContent = enabled
+      ? (arkhamLanguage.language === "en" ? "Active · " : "Activo · ") + (profile(saved)?.[0] || arkhamLanguage.t("Personalizado"))
+      : offLabel;
     sliders.forEach(({ input, output }, index) => {
       if (syncInputs) input.value = draft[index];
       const gain = signed(draft[index]) + " dB";
@@ -98,6 +104,28 @@ function createAudioStudio({ api, action, video, playingStream, playbackDate }) 
       input.setAttribute("aria-valuetext", gain);
     });
     apply.disabled = !ready || busy || !edit;
+  }
+
+  function syncToggles() {
+    for (const toggle of toggles) {
+      toggle.checked = enabled;
+      toggle.disabled = !ready || busy;
+    }
+  }
+
+  for (const toggle of toggles) {
+    toggle.closest("label").hidden = false;
+    toggle.addEventListener("change", async () => {
+      const checked = toggle.checked;
+      busy = true;
+      syncToggles();
+      const success = await action("equalizer-enabled", { enabled: checked });
+      if (success) enabled = checked;
+      busy = false;
+      syncToggles();
+      updateEq();
+      drawPreview();
+    });
   }
 
   function change(gains, syncInputs = true) {
@@ -341,7 +369,9 @@ function createAudioStudio({ api, action, video, playingStream, playbackDate }) 
     },
     render(state, pending) {
       ready = Array.isArray(state.equalizer) && !pending && state.scan.state !== "running";
-      if (Array.isArray(state.equalizer) && !same(saved, state.equalizer)) {
+      const nextEnabled = state.equalizerEnabled !== false;
+      if (Array.isArray(state.equalizer) && (!same(saved, state.equalizer) || enabled !== nextEnabled)) {
+        enabled = nextEnabled;
         saved = state.equalizer;
         if (!edit) draft = [...saved];
         edit = !same(draft, saved);
@@ -350,6 +380,7 @@ function createAudioStudio({ api, action, video, playingStream, playbackDate }) 
       } else {
         apply.disabled = !ready || busy || !edit;
       }
+      syncToggles();
       if (active && !playingStream()) paintCurrentSample();
     },
   };

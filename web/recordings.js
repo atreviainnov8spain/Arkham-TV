@@ -2,6 +2,16 @@
 
 const recordingQualities = { 480: "480p", 720: "720p", 1080: "1080p", 2160: "4K" };
 
+function recordingIcon(name) {
+  const namespace = "http://www.w3.org/2000/svg";
+  const icon = document.createElementNS(namespace, "svg");
+  const use = document.createElementNS(namespace, "use");
+  use.setAttribute("href", "#i-" + name);
+  icon.setAttribute("aria-hidden", "true");
+  icon.append(use);
+  return icon;
+}
+
 function trackName(track, index) {
   const { t, f, locale } = arkhamLanguage;
   const code = track.language;
@@ -136,7 +146,7 @@ function createCaptureOptions({ action, current }) {
   return { choose, render };
 }
 
-function createRecordings({ action, openRecording, chooseCapture }) {
+function createRecordings({ action, openRecording, chooseCapture, transcribeRecording }) {
   const el = (id) => document.getElementById(id);
   const folder = el("recording-folder");
   const feedback = el("recording-feedback");
@@ -147,7 +157,15 @@ function createRecordings({ action, openRecording, chooseCapture }) {
   const live = el("record-live");
   const list = el("recording-list");
   const dialog = el("recording-delete-dialog");
+  const recordedScreen = el("recorded-screen");
   const recordedVideo = el("recorded-video");
+  const fullscreen = el("recorded-fullscreen");
+  const playerControls = el("recorded-controls");
+  const playControl = el("recorded-play");
+  const progress = el("recorded-progress");
+  const playbackTime = el("recorded-time");
+  const volume = el("recorded-volume");
+  const sound = el("recorded-sound");
   const recordedError = el("recorded-error");
   const recordedFolderFeedback = el("recorded-folder-feedback");
   const openLibraryFolder = el("recordings-open-folder");
@@ -158,6 +176,8 @@ function createRecordings({ action, openRecording, chooseCapture }) {
     scheduled: arkhamLanguage.t("Programada"), recording: arkhamLanguage.t("Grabando"), finishing: arkhamLanguage.t("Guardando archivo"),
     done: arkhamLanguage.t("Guardada"), cancelled: arkhamLanguage.t("Cancelada"), error: arkhamLanguage.t("Interrumpida"),
   };
+  const showThumbnails = Boolean(window.arkhamNative || window.arkhamLinux);
+  list.classList.toggle("recording-gallery", showThumbnails);
   let currentState;
   let folderValue;
   let key;
@@ -170,10 +190,122 @@ function createRecordings({ action, openRecording, chooseCapture }) {
   let selectedId;
   let playbackId;
   let deleteId;
+  let audibleVolume = 1;
+
+  function controlLabel(button, label, icon) {
+    const translated = arkhamLanguage.t(label);
+    button.setAttribute("aria-label", translated);
+    button.title = translated;
+    button.querySelector("use").setAttribute("href", "#i-" + icon);
+  }
+
+  function timecode(seconds) {
+    const parts = [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, Math.floor(seconds) % 60];
+    if (!parts[0]) parts.shift();
+    return parts.map((part, index) => String(part).padStart(index ? 2 : 1, "0")).join(":");
+  }
+
+  function syncProgress() {
+    const duration = Number.isFinite(recordedVideo.duration) ? recordedVideo.duration : 0;
+    const position = recordedVideo.currentTime;
+    progress.disabled = duration <= 0;
+    progress.max = duration;
+    progress.value = position;
+    const label = timecode(position) + " / " + timecode(duration);
+    playbackTime.textContent = label;
+    progress.setAttribute("aria-valuetext", label);
+  }
+
+  function syncVolume() {
+    if (recordedVideo.volume > 0) audibleVolume = recordedVideo.volume;
+    const silent = recordedVideo.muted || recordedVideo.volume === 0;
+    const value = silent ? 0 : Math.round(recordedVideo.volume * 100);
+    volume.value = value;
+    volume.style.setProperty("--recorded-level", value + "%");
+    volume.setAttribute("aria-valuetext", value + " %");
+    controlLabel(sound, silent ? "Activar sonido" : "Silenciar", silent ? "muted" : "volume");
+  }
+
+  function syncPlayControl() {
+    const paused = recordedVideo.paused || recordedVideo.ended;
+    controlLabel(playControl, paused ? "Reproducir" : "Pausar", paused ? "play" : "pause");
+  }
+
+  for (const name of ["timeupdate", "durationchange", "loadedmetadata", "emptied"]) recordedVideo.addEventListener(name, syncProgress);
+  for (const name of ["play", "pause", "ended"]) recordedVideo.addEventListener(name, syncPlayControl);
+  recordedVideo.addEventListener("volumechange", syncVolume);
+  playControl.addEventListener("click", () => {
+    recordingStartup.cancel();
+    if (recordedVideo.paused || recordedVideo.ended) void recordedVideo.play().catch(() => {});
+    else recordedVideo.pause();
+  });
+  progress.addEventListener("input", () => {
+    recordingStartup.cancel();
+    if (Number.isFinite(recordedVideo.duration)) recordedVideo.currentTime = progress.valueAsNumber;
+  });
+  volume.addEventListener("input", () => {
+    recordedVideo.volume = volume.valueAsNumber / 100;
+    if (recordedVideo.muted) recordedVideo.muted = false;
+    syncVolume();
+  });
+  sound.addEventListener("click", () => {
+    if (recordedVideo.volume === 0) {
+      recordedVideo.volume = audibleVolume;
+      recordedVideo.muted = false;
+    } else recordedVideo.muted = !recordedVideo.muted;
+  });
+
+  function syncFullscreen() {
+    const expanded = document.fullscreenElement === recordedScreen || recordedScreen.classList.contains("monitor-expanded");
+    controlLabel(fullscreen, expanded ? "Salir de pantalla completa" : "Pantalla completa", expanded ? "contract" : "expand");
+    recordedVideo.controls = !expanded;
+    playerControls.hidden = !expanded;
+    if (expanded) {
+      syncProgress();
+      syncPlayControl();
+      syncVolume();
+    }
+  }
+
+  function expandRecording(expanded) {
+    recordedScreen.classList.toggle("monitor-expanded", expanded);
+    document.body.classList.toggle("recording-expanded", expanded);
+    syncFullscreen();
+  }
+
+  async function exitFullscreen() {
+    if (recordedScreen.classList.contains("monitor-expanded")) expandRecording(false);
+    else if (document.fullscreenElement === recordedScreen) {
+      await document.exitFullscreen().catch(() => {});
+    }
+  }
+
+  fullscreen.addEventListener("click", async () => {
+    if (document.fullscreenElement === recordedScreen || recordedScreen.classList.contains("monitor-expanded")) {
+      await exitFullscreen();
+      return;
+    }
+    if (recordedScreen.requestFullscreen) {
+      try {
+        await recordedScreen.requestFullscreen();
+        if (!playbackId || el("grabacion").hidden) await exitFullscreen();
+        return;
+      } catch { /* Use the entire app window when system fullscreen is unavailable. */ }
+    }
+    if (playbackId && !el("grabacion").hidden) expandRecording(true);
+  });
+  document.addEventListener("fullscreenchange", syncFullscreen);
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || !recordedScreen.classList.contains("monitor-expanded")) return;
+    event.preventDefault();
+    expandRecording(false);
+  }, true);
+  syncFullscreen();
 
   function showPlaybackError(message) {
     recordedError.textContent = message;
     recordedError.hidden = !message;
+    fullscreen.hidden = Boolean(message) || !playbackId;
   }
 
   function syncPlayer() {
@@ -196,6 +328,7 @@ function createRecordings({ action, openRecording, chooseCapture }) {
     if (identifier === selectedId) return;
     selectedId = identifier;
     if (playbackId) {
+      void exitFullscreen();
       playbackId = undefined;
       recordingStartup.cancel();
       recordedVideo.pause();
@@ -274,14 +407,53 @@ function createRecordings({ action, openRecording, chooseCapture }) {
     const details = document.createElement("div");
     const title = document.createElement("strong");
     const metadata = document.createElement("small");
+    const playable = Boolean(job.file && ["done", "error"].includes(job.state));
+    const illustrated = showThumbnails && playable;
+    const quality = recordingQualities[job.quality];
     title.textContent = job.title;
-    metadata.textContent = [labels[job.state], job.channel.name, date.format(job.start * 1000),
-      recordingQualities[job.quality], job.audio ? trackLabel(job.audio, 0) : null].filter(Boolean).join(" · ");
+    const when = date.format(job.start * 1000);
+    const audio = job.audio ? trackLabel(job.audio, 0) : null;
+    metadata.textContent = (illustrated ? [job.channel.name, when, audio] : [labels[job.state], job.channel.name, when, quality, audio])
+      .filter(Boolean).join(" · ");
+    if (illustrated) {
+      row.className = "recording-card";
+      details.className = "recording-details";
+      const cover = document.createElement("button");
+      cover.type = "button";
+      cover.className = "recording-cover";
+      cover.setAttribute("aria-label", arkhamLanguage.t("Reproducir") + " " + job.title);
+      cover.title = arkhamLanguage.t("Reproducir");
+      cover.addEventListener("click", () => openRecording(job.id));
+      const image = document.createElement("img");
+      image.alt = "";
+      image.loading = "lazy";
+      image.decoding = "async";
+      image.addEventListener("load", () => cover.classList.add("has-frame"), { once: true });
+      image.addEventListener("error", () => image.remove(), { once: true });
+      image.src = "/grabacion/" + job.id + ".jpg";
+      const play = document.createElement("span");
+      play.className = "recording-cover-play";
+      play.append(recordingIcon("play"));
+      cover.append(image, play);
+      if (quality) {
+        const format = document.createElement("span");
+        format.className = "recording-cover-format";
+        format.textContent = quality;
+        cover.append(format);
+      }
+      row.append(cover);
+      const badge = document.createElement("span");
+      badge.className = "recording-state";
+      badge.dataset.state = job.state;
+      badge.textContent = labels[job.state];
+      details.append(badge);
+    }
     details.append(title, metadata);
-    if (job.file && ["done", "error"].includes(job.state)) {
+    if (playable) {
       const file = document.createElement("p");
       file.className = "feedback recording-file";
-      file.textContent = job.file;
+      file.textContent = illustrated ? job.file.split("/").pop() : job.file;
+      if (illustrated) file.title = job.file;
       details.append(file);
     }
     if (job.message) {
@@ -303,7 +475,7 @@ function createRecordings({ action, openRecording, chooseCapture }) {
     } else if (["done", "error", "cancelled"].includes(job.state)) {
       const buttons = document.createElement("div");
       buttons.className = "recording-buttons";
-      if (job.file) {
+      if (playable && !illustrated) {
         const play = document.createElement("button");
         play.type = "button";
         play.className = "button primary";
@@ -311,6 +483,29 @@ function createRecordings({ action, openRecording, chooseCapture }) {
         play.setAttribute("aria-label", arkhamLanguage.t("Reproducir") + " " + job.title);
         play.addEventListener("click", () => openRecording(job.id));
         buttons.append(play);
+      }
+      if (playable && transcribeRecording) {
+        const transcribe = document.createElement("button");
+        transcribe.type = "button";
+        transcribe.className = "button secondary recording-transcribe";
+        const label = arkhamLanguage.locale.startsWith("en") ? "Transcribe" : "Transcribir";
+        transcribe.append(recordingIcon("signal-captions"), document.createTextNode(label));
+        transcribe.setAttribute("aria-label", label + " · " + job.title);
+        transcribe.addEventListener("click", async () => {
+          if (transcribe.dataset.busy) return;
+          transcribe.dataset.busy = "true";
+          transcribe.disabled = true;
+          feedback.textContent = "";
+          try {
+            await transcribeRecording(job.id);
+          } catch (error) {
+            feedback.textContent = error.message;
+          } finally {
+            delete transcribe.dataset.busy;
+            transcribe.disabled = false;
+          }
+        });
+        buttons.append(transcribe);
       }
       const remove = document.createElement("button");
       remove.type = "button";
@@ -374,7 +569,7 @@ function createRecordings({ action, openRecording, chooseCapture }) {
       list.hidden = !jobs.length;
       el("recording-empty").hidden = Boolean(jobs.length);
     }
-    for (const button of list.querySelectorAll("button")) button.disabled = pending;
+    for (const button of list.querySelectorAll("button")) button.disabled = pending || Boolean(button.dataset.busy);
   }
 
   return { render, navigate };

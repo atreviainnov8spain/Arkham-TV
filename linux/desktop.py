@@ -16,21 +16,27 @@ from urllib.parse import urlsplit
 ROOT = Path(__file__).resolve().parent
 TITLE = "Arkham TV"
 
-# WebKitGTK's DMA-BUF renderer can show the video outside the layer that
-# carries the picture controls. Set this before WebKit starts its subprocesses.
-os.environ.setdefault("WEBKIT_DISABLE_DMABUF_RENDERER", "1")
-
 # Parallels exposes a virtio GPU with PCI subsystem vendor 1ab8. Its OpenGL
 # driver can create WebGL contexts that fail to draw the channel universe.
 PARALLELS_GRAPHICS = False
-for vendor in Path("/sys/class/drm").glob("renderD*/device/subsystem_vendor"):
+INTEL_GRAPHICS = False
+for device in Path("/sys/class/drm").glob("renderD*/device"):
     try:
-        if vendor.read_text(encoding="ascii").strip() == "0x1ab8":
+        if (device / "subsystem_vendor").read_text(encoding="ascii").strip() == "0x1ab8":
             PARALLELS_GRAPHICS = True
             os.environ.setdefault("LIBGL_ALWAYS_SOFTWARE", "true")
-            break
     except OSError:
-        continue
+        pass
+    try:
+        if (device / "vendor").read_text(encoding="ascii").strip() == "0x8086":
+            INTEL_GRAPHICS = True
+    except OSError:
+        pass
+
+# Keep the existing compatibility path in Parallels and on unidentified GPUs.
+# On Intel let WebKit use the native rendering path when available.
+if PARALLELS_GRAPHICS or not INTEL_GRAPHICS:
+    os.environ.setdefault("WEBKIT_DISABLE_DMABUF_RENDERER", "1")
 
 try:
     import gi
@@ -58,6 +64,7 @@ class Desktop(Gtk.Application):
         self.folder_picker = None
         self.hdmi_request = None
         self.hdmi_package_picker = None
+        self.transcript_picker = None
         self.mini = None
         self.mini_active = False
         self.origin = None
@@ -135,7 +142,7 @@ class Desktop(Gtk.Application):
             self.server = subprocess.Popen([
                 sys.executable, "-B", str(ROOT / "app.py"), "--port", str(self.preferred_port()),
                 "--data-dir", str(self.data), "--ready-file", str(self.ready),
-            ], cwd=ROOT, stdin=subprocess.DEVNULL)
+            ], cwd=ROOT, stdin=subprocess.DEVNULL, env={**os.environ, "ARKHAM_AI_HELPERS": str(ROOT / "bin")})
         except BlockingIOError:
             self.show_error(self.tr("Ya hay otra instancia de Arkham TV en ejecución. Ciérrala y vuelve a abrir la aplicación.",
                                     "Arkham TV is already running. Close it and reopen the app."))
@@ -236,6 +243,8 @@ class Desktop(Gtk.Application):
         content = self.view.get_user_content_manager()
         content.register_script_message_handler("arkhamLanguage")
         content.connect("script-message-received::arkhamLanguage", self.change_language)
+        content.register_script_message_handler("arkhamAIExport")
+        content.connect("script-message-received::arkhamAIExport", self.save_transcript)
         if os.environ.get("SNAP"):
             content.register_script_message_handler("arkhamHDMIAuthorize")
             content.connect("script-message-received::arkhamHDMIAuthorize", self.authorize_hdmi)
@@ -377,6 +386,45 @@ class Desktop(Gtk.Application):
                 else:
                     self.hdmi_result("package", "saved")
             self.hdmi_package_picker = None
+            dialog.destroy()
+
+        picker.connect("response", selected)
+        picker.show()
+
+    def save_transcript(self, _manager, result):
+        uri = urlsplit(self.view.get_uri() or "")._replace(fragment="").geturl()
+        if self.transcript_picker is not None or uri != self.origin + "/":
+            return
+        try:
+            item = json.loads(result.get_js_value().to_json(0))
+            extension, text = item["format"], item["text"]
+            if extension not in {"md", "txt"} or not isinstance(text, str):
+                return
+            contents = text.encode("utf-8")
+            if len(contents) > 12 * 1024 * 1024:
+                return
+        except (ValueError, TypeError, KeyError):
+            return
+
+        picker = Gtk.FileChooserNative.new(
+            self.tr("Exportar transcripción", "Export transcript"), self.window, Gtk.FileChooserAction.SAVE,
+            self.tr("Guardar", "Save"), self.tr("Cancelar", "Cancel"),
+        )
+        self.transcript_picker = picker
+        picker.set_current_name(self.tr("Transcripción", "Transcript") + "." + extension)
+        picker.set_do_overwrite_confirmation(True)
+
+        def selected(dialog, response):
+            if response == Gtk.ResponseType.ACCEPT:
+                try:
+                    dialog.get_file().replace_contents(contents, None, False, Gio.FileCreateFlags.NONE, None)
+                except (OSError, GLib.Error):
+                    outcome = "error"
+                else:
+                    outcome = "saved"
+                event = "window.dispatchEvent(new CustomEvent('arkham-ai-export', {detail: " + json.dumps(outcome) + "}));"
+                self.view.evaluate_javascript(event, -1, None, None, None, None, None)
+            self.transcript_picker = None
             dialog.destroy()
 
         picker.connect("response", selected)

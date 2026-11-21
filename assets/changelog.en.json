@@ -5,7 +5,9 @@
     "On Linux, confirm video and audio access from HDMI input. The Snap requires the camera and audio recording connections.",
     "Open HDMI input in Live, choose the capture device’s video and audio, and scan or change channels using the receiver’s remote.",
     "Record the HDMI input at up to 1080p with stereo sound or share it with your phone. The USB tuner still provides its own over-the-air features.",
-    "On macOS and Linux, Live adds picture modes and a personal setting for brightness, contrast, sharpness, and color."
+    "On macOS and Linux, Live adds picture modes and a personal setting for brightness, contrast, sharpness, and color. Standard plays the captured picture without filters.",
+    "On macOS and Linux, each saved video shows a frame in the archive. Open it from its thumbnail and use the full screen button. Press Esc to return to the normal size.",
+    "On macOS, returning to Live keeps playback running when the picture is advancing normally and recovers the broadcast if playback has fallen behind."
   ],
   "1.9": [
     "Invisible TV · Signal analysis and Teletext",

@@ -21,15 +21,15 @@ En Ubuntu, usa como entrada un ejecutable portátil de la arquitectura correspon
 
 ```sh
 snap/fetch-codecs.sh arm64 /var/tmp/arkham-codecs/arm64
-python3 snap/build.py arm64 dist/1.12/Arkham-TV-1.12-Ubuntu-ARM64 /var/tmp/arkham-codecs/arm64 dist/1.12
+python3 snap/build.py arm64 dist/1.12.1/Arkham-TV-1.12.1-Ubuntu-ARM64 /var/tmp/arkham-codecs/arm64 dist/1.12.1
 snap/fetch-codecs.sh amd64 /var/tmp/arkham-codecs/amd64
-python3 snap/build.py amd64 dist/1.12/Arkham-TV-1.12-Ubuntu-Intel-x86_64 /var/tmp/arkham-codecs/amd64 dist/1.12
+python3 snap/build.py amd64 dist/1.12.1/Arkham-TV-1.12.1-Ubuntu-Intel-x86_64 /var/tmp/arkham-codecs/amd64 dist/1.12.1
 ```
 
 Para probar el paquete local ARM64 con confinamiento, usa estos comandos en una máquina de pruebas.
 
 ```sh
-sudo snap install --dangerous dist/1.12/arkham-tv_1.12_arm64.snap
+sudo snap install --dangerous dist/1.12.1/arkham-tv_1.12.1_arm64.snap
 sudo snap connect arkham-tv:dvb
 snap run arkham-tv --diagnostico
 snap run arkham-tv

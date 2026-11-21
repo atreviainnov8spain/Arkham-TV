@@ -207,7 +207,7 @@ def stage_ai_release(contents, helpers):
     plist = contents / "Info.plist"
     info = plistlib.loads(plist.read_bytes())
     info["CFBundleShortVersionString"] = version
-    info["CFBundleVersion"] = "68"
+    info["CFBundleVersion"] = "69"
     plist.write_bytes(plistlib.dumps(info))
 
 

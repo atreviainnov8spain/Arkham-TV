@@ -1,41 +1,54 @@
-Watch and record free-to-air television on Linux with a compatible USB DVB-T/T2 tuner or USB HDMI capture device. Available for ARM64 and 64-bit Intel/AMD.
+Watch and record free-to-air TV on Linux with a compatible USB DVB-T/T2 tuner or USB HDMI capture device. Includes a TV Guide, recordings, teletext, signal analysis and local AI. Available for ARM64 and 64-bit Intel/AMD, with an English or Spanish interface.
 
-**New in 1.10 · HDMI and picture controls**
+**NEW IN 1.12.1 · SOLSTICE IN ARKHAM**
 
-Open **HDMI input** to watch an external TV receiver through a USB capture device. In **Live**, choose a picture mode or save personal brightness, contrast, sharpness and color settings.
+Seasonal Cthulhu details match your colour theme from 20 November through 8 January each year. Static artwork stays in the frame and navigation, outside the video and controls; it adapts to the space available.
 
-On a fresh install, open **HDMI input** to save the HDMI permissions helper and install it once in Ubuntu's App Center. Return to Arkham TV, check the installation and choose **Allow**. Ubuntu asks an administrator to approve camera and audio access.
+**INCLUDED FROM 1.12**
 
-**New in 1.9 · Invisible TV**
+**A new channel universe**
+Explore frequencies as planets in a Three.js orbital map. Open the channel inspector, select a channel to tune in and follow the active reception. Data flows, Timeline and Channel anatomy reveal the information carried by the signal.
 
-Explore scanned frequencies as planets in a 3D universe. The antenna sits at the centre, and each planet’s satellites are the channels that share its frequency. Select a planet to zoom in, then select a channel to tune in.
+**Live transcription and recordings**
+• Open the AI assistant and choose Start transcription. Opening the panel alone does not start recognition.
+• Transcribe saved videos directly from Recordings. Find the results in AI transcripts, clearly marked LIVE or RECORDING.
+• Read continuous paragraphs or a script with coloured timestamps in a separate column.
+• Export Markdown or plain text, with optional timestamps and AI responses.
+• Delete individual saved transcripts or clear the finished panel while keeping its saved session.
 
-Follow the active signal through animated electric pulses with red and blue edges. **Data flows** shows how much data goes to video, audio, subtitles and teletext. **Timeline** shows recent reception changes, and **Channel anatomy** lists the tracks carried by the channel.
+**Choose your local AI models**
+Download and activate models in Settings when you need them:
+• Speech: Whisper in several sizes, plus experimental Parakeet TDT v3 INT8 and Qwen3-ASR 0.6B INT8.
+• Chat: Qwen3 and Bonsai 2 in different sizes for questions, summaries, analysis and reports based on your transcripts.
+• Recorded voices: optional speaker separation with editable Voice 1, Voice 2 labels. Requires additional models and is off by default; it does not identify people automatically.
 
-**New in 1.9 · Teletext over the air**
+Audio, transcripts and questions are processed on your computer. Model downloads require Internet. Pending live audio stays in a local queue while playback has priority. Compatible Intel/AMD CPUs can use AVX2 engines; no dedicated AI graphics card is required.
 
-Open **Teletext** to load the broadcaster’s index automatically as pages arrive. Choose a channel or enter a page number to jump straight to it.
+**TV, RECORDINGS AND MOBILE**
 
-Use **Reading** for clearer headlines, columns and links, or **Original view** for the broadcast grid, colours and mosaics. Pages stay in the broadcaster’s language.
+Browse the TV Guide, save favourites and keep tuning profiles for different locations. Record MP4 with AAC stereo and schedule recordings from the guide. Keep Arkham TV open and your computer awake for scheduled recordings. Recording output supports up to 4K; enlarging the output does not add detail to the broadcast.
 
-**Live TV, recordings and mobile**
+Adjust audio sync, volume and the ten-band equalizer. Picture and equalizer switches let you bypass processing; Standard displays the captured picture without image filters.
 
-Watch live, browse the TV Guide and save channel lists for different locations. Adjust audio sync per channel and use the ten-band equalizer.
+Choose Watch on your phone and scan the QR code with an iPhone or Android on the same Wi-Fi network.
 
-Record to MP4 with AAC stereo at up to 4K. Schedule recordings from the TV Guide and keep the app open and your computer awake.
+**HDMI AND TUNER COMPATIBILITY**
 
-Select **Watch on your phone** and scan the QR code with an iPhone or Android on the same Wi-Fi network. Rotate the phone to fill the screen and change channels from its TV Guide.
+Connect a TV receiver by HDMI to a USB capture device, such as Elgato Cam Link 4K. Use the receiver's remote to change channels. On a fresh Snap install, open HDMI input, save its permissions helper and install it once through Ubuntu's App Center. Return to the app, check installation and choose Allow.
 
-**Tuner compatibility**
+Linux tuners work when their driver and firmware expose a usable adapter in /dev/dvb. AVerMedia A835 and A835B are supported examples, rather than the only compatible models. DVB-T2 requires a compatible tuner and driver.
 
-Arkham TV was created to keep the **AVerMedia AVerTV Volar HD USB A835** (Afatech AF9035) and **A835B** (ITE IT9135 family) in use.
+**FIRST LAUNCH: ENABLE ANTENNA ACCESS**
 
-Other DVB-T and DVB-T2 tuners work when Ubuntu exposes them in `/dev/dvb` with a working driver and firmware. Scans cover UHF 21–48 (8 MHz). Playback codecs are included for ARM64 and 64-bit Intel/AMD.
-
-**First launch · Enable tuner access**
-
-Open **Terminal** and run this command once before scanning. Automatic DVB access is awaiting Canonical approval.
+Run once before scanning:
 
     sudo snap connect arkham-tv:dvb
 
-The interface and Changelog are available in English and Spanish. Developed by Óscar Peña de San Antonio, 2026.
+Using Parallels? Assign the tuner USB device to Ubuntu; the guest must detect it before Arkham TV can scan.
+
+**PROJECT AND DOWNLOADS**
+
+https://github.com/atreviainnov8spain/Arkham-TV
+Full release history is available in the app's Changelog.
+
+Developed by Óscar Peña de San Antonio. GPL-2.0-or-later.

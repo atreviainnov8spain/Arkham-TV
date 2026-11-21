@@ -78,22 +78,11 @@ def add_codecs(downloads, root, triplet):
 
 
 def description(application):
-    assets = application / "assets"
-    history = json.loads((assets / "changelog.json").read_text(encoding="utf-8"))
-    english = json.loads((assets / "changelog.en.json").read_text(encoding="utf-8"))
-    introduction = (HERE / "description.txt").read_text(encoding="utf-8").strip()
-    footer = "Open Changelog in Arkham TV to see the full release history."
-    sections = [introduction, "", "Recent changes"]
-    for release in history[:3]:
-        version = release["version"]
-        title, *notes = english[version]
-        entry = [version + " · " + title, *("• " + note for note in notes)]
-        if len("\n".join([*sections, *entry, footer]).encode("utf-8")) > DESCRIPTION_LIMIT:
-            if len(sections) == 3:
-                raise ValueError(f"Snap description with release {version} exceeds {DESCRIPTION_LIMIT} bytes.")
-            break
-        sections.extend(entry)
-    return "\n".join([*sections, footer])
+    # The reviewed listing includes its own current release notes and sections.
+    text = (HERE / "description.txt").read_text(encoding="utf-8").strip()
+    if len(text.encode("utf-8")) > DESCRIPTION_LIMIT:
+        raise ValueError(f"Snap description exceeds {DESCRIPTION_LIMIT} bytes.")
+    return text
 
 
 def make_manifest(application, architecture, triplet):

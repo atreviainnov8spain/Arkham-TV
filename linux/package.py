@@ -18,7 +18,7 @@ from native.changelog import release_version
 from native.local_ai import TOOLS as AI_TOOLS
 
 ARCHITECTURES = {"x86_64": 62, "aarch64": 183}
-DEBIAN_REVISION = 3
+DEBIAN_REVISION = 1
 ICON = ROOT / "assets/arkhamtv-icon.png"
 DESKTOP_ENTRY = ROOT / "linux/com.arkhamtv.desktop.desktop"
 
